@@ -20,17 +20,58 @@ Claude Code는 `/bok-start`, Codex는 `$bok-start`처럼 스킬을 지정합니�
 
 ## 설치 / 업데이트
 
-이 저장소를 받은 뒤 PowerShell에서 실행합니다.
+이 안내는 **로컬 Claude Code / Codex의 프로젝트 스킬 설치** 기준입니다. 일반 Claude 웹 채팅에 ZIP을 올리는 방식이나 Claude 플러그인 마켓플레이스 설치 명령이 아닙니다. 아래 경로는 현재 개발 환경의 예시이므로 다른 환경에서는 실제 저장소 경로로 바꿉니다.
+
+### 두 에이전트에 동시 설치
+
+PowerShell에서 플러그인 저장소로 이동한 뒤 실행합니다.
 
 ```powershell
+Set-Location C:/workspace/AI-project/bok-plugin
 powershell -ExecutionPolicy Bypass -File ./plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web
 ```
+
+### Claude Code만 설치
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:/workspace/AI-project/bok-plugin/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web -Agent Claude
+```
+
+### Codex만 설치
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:/workspace/AI-project/bok-plugin/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web -Agent Codex
+```
+
+`-Agent Both`는 생략 시 기본값입니다. 다른 프로젝트에 설치할 때는 `-Project`만 실제 경로로 바꿉니다.
+
+### 설치 위치 및 확인
+
+| 에이전트 | 설치 위치(대상 프로젝트 기준) | 대화창 호출 |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/bok-*/SKILL.md` | `/bok-start` |
+| Codex | `.agents/skills/bok-*/SKILL.md` | `$bok-start` |
+
+설치기는 대상의 `AGENTS.md`와 `CLAUDE.md`에 관리용 안내 블록을 없을 때 추가합니다. 기존 내용은 보존합니다. 이 설치는 별도 AI 프로세스나 자동 실행 에이전트를 만드는 것이 아니라, 해당 도구가 읽는 스킬과 보조 스크립트를 배치하는 작업입니다.
+
+```powershell
+Test-Path C:/workspace/vue-project/bok-vue-web/.claude/skills/bok-start/SKILL.md
+Test-Path C:/workspace/vue-project/bok-vue-web/.agents/skills/bok-start/SKILL.md
+```
+
+선택한 에이전트의 경로가 `True`인지 확인한 다음, **플러그인 저장소가 아니라 Vue 프로젝트를 열어** 새 대화를 시작합니다. Codex에서는 설치된 스킬을 선택하거나 `$bok-start`로 지정합니다. Claude Code에서는 `/bok-start`를 입력합니다. 명령이 안 보이면 프로젝트 경로와 설치 위치를 확인하고 새 세션/앱 재시작 후 다시 확인하세요.
+
+호출·탐색 방식의 공식 근거: [OpenAI Skills](https://learn.chatgpt.com/docs/build-skills), [Claude Code Skills](https://code.claude.com/docs/en/skills).
 
 대상 프로젝트의 `.agents/skills`(Codex), `.claude/skills`(Claude)에 설치합니다. **대상 프로젝트에서 새 세션을 열어** 사용하세요. 같은 명령으로 갱신하며, 관리되지 않는 동명 스킬은 덮어쓰지 않습니다. 홈 설정 변경이나 마켓플레이스 설치는 필요 없습니다. 프로젝트 설치와 마켓플레이스 설치를 중복하지 마세요.
 
 요구사항: 프로젝트가 요구하는 Node.js, Python 3.10+, Vue 프로젝트 의존성. Office 추출은 표준 라이브러리 기반이며 브라우저 검증에는 사용 환경의 Playwright/브라우저가 필요합니다. 비밀번호·Jira 토큰은 저장소나 대화에 넣지 않습니다.
 
 ## 권장 사용 흐름
+
+`bok-start → 오너 리뷰 → bok-spec → (선택: bok-jira) → bok-implement → bok-verify → bok-feedback`
+
+다음 예시는 **AI 대화창 입력**입니다. PowerShell에서 실행하는 명령이 아닙니다.
 
 ```text
 /bok-start
@@ -60,6 +101,48 @@ XLSX: <그림 데이터 경로>
 
 Codex에서는 각 첫 명령의 `/`를 `$`로 바꿉니다. 역순 범위는 정규화 목록 확인 후 진행하며, 범위 안의 무관한 티켓은 제외합니다. Jira 없는 테스트도 로컬 단위로 가능하고 가짜 티켓은 만들지 않습니다.
 
+### Claude / Codex 명령 대응표
+
+| 목적 | Claude Code | Codex | 입력할 내용 |
+| --- | --- | --- | --- |
+| 문서 준비 | `/bok-start` | `$bok-start` | 보고서 ID, DOCX/XLSX 경로, 대상 프로젝트, 이전 보고서 브랜치 |
+| 리뷰 반영 | `/bok-spec` | `$bok-spec` | 리뷰 파일 또는 오너의 재사용/신규/보류 결정 |
+| Jira 등록 | `/bok-jira` | `$bok-jira` | 목적지 링크, 프로젝트/부모 티켓, 등록할 작업, 명시적 등록 요청 |
+| 범위 구현 | `/bok-implement` | `$bok-implement` | 그림 번호, 로컬 단위 또는 티켓 목록/범위 |
+| 차트 개발 | `/bok-chart` | `$bok-chart` | 승인된 차트 단위/OpenSpec. 보통 implement 단계에서 사용 |
+| 검증 | `/bok-verify` | `$bok-verify` | 그림 번호, 티켓 또는 검수 ID. 검증만 요청하면 코드 수정 없음 |
+| 피드백 | `/bok-feedback` | `$bok-feedback` | 검수 ID, 수정 의견, 최소 한 개의 테스트 조건 |
+
+`bok-report-publishing`은 공통 개발 계약 스킬이며 보통 위 명령들이 내부적으로 참조합니다. 별도로 호출해도 승인·범위 조건을 건너뛰지 않습니다.
+
+### Codex에서 바로 입력할 예시
+
+```text
+$bok-start
+보고서: 2026-09
+DOCX: C:/Users/jung3/Downloads/O_1. 2026년 9월 통화신용정책보고서.docx
+XLSX: C:/Users/jung3/Downloads/O_3. 그림 원본 데이터.xlsx
+대상: C:/workspace/vue-project/bok-vue-web
+이전 보고서 브랜치: feature
+구현하지 말고 원본과 이전 차트의 비교 리뷰를 만들어줘.
+```
+
+리뷰를 확인한 다음 단계별로 입력합니다. 아래 승인 문장은 실제 판단이 같을 때만 사용하세요.
+
+```text
+$bok-spec 그림 I-1은 기존 차트 재사용 승인. 다른 그림은 보류. 이 결정을 OpenSpec에 반영해줘.
+```
+
+```text
+$bok-implement 그림 I-1만 구현해줘. 완료 후 다른 그림으로 진행하지 마.
+```
+
+```text
+$bok-verify 그림 I-1의 원본 데이터, 축·단위, 범례, 375px 모바일 화면을 검증해줘.
+```
+
+Claude Code에서는 동일 문장에서 `$bok-...`를 `/bok-...`로 바꾸면 됩니다.
+
 ## 차트 개발의 두 경로
 
 - **재사용:** 이전 보고서의 의미·계열·축·단위·구조가 맞으면 소스를 새 보고서로 복사하고 데이터·기간·필요한 내부 표현만 변경.
@@ -80,11 +163,29 @@ Codex에서는 각 첫 명령의 `/`를 `$`로 바꿉니다. 역순 범위는 �
 
 ## Jira 등록
 
+```text
+/bok-jira
+목적지: https://<회사>.atlassian.net/browse/<상위 티켓>
+오너가 승인한 그림 I-1 작업의 등록 목록과 실제 이슈 유형을 먼저 보여줘.
+아직 등록하지 마.
+```
+
+목록과 목적지를 확인한 후 별도 메시지로 등록을 요청합니다. Jira 번호가 생기면 `/bok-implement BOK-123,BOK-124`처럼 범위를 지정합니다. Jira는 선택 사항이며 로컬 차트 테스트에는 필요 없습니다.
+
 `/bok-jira`에서 목적지 링크, 프로젝트/상위 티켓, 실제 이슈 유형과 등록 목록을 먼저 확인합니다. 생성 단위는 목차 본문, 각주, **개별 그림 구현·검증**, 개별 표/이미지입니다.
 
 환경 변수: `JIRA_BASE_URL`(HTTPS 사이트 origin), `JIRA_EMAIL`, `JIRA_API_TOKEN`. Jira Cloud REST v3 생성 메타데이터를 확인하며 필수 커스텀 필드를 임의로 채우지 않습니다. 동일 작업의 중복 등록을 검사하고, 생성 응답이 불명확하면 자동 재시도하지 않습니다. 실제 서버 등록은 아직 통합 검증하지 않았습니다.
 
 ## 검수 화면 / 피드백
+
+다음은 **터미널용 명령**이며 플러그인 저장소에서 실행합니다. `dev`는 개발 서버를 실행하고, `build`는 파일만 생성합니다.
+
+```powershell
+Set-Location C:/workspace/AI-project/bok-plugin
+node plugins/bok-report-publisher/scripts/review.mjs dev --repo C:/workspace/vue-project/bok-vue-web
+```
+
+검수 빌드와 번호 확인:
 
 ```powershell
 node plugins/bok-report-publisher/scripts/review.mjs build --repo C:/workspace/vue-project/bok-vue-web
@@ -100,6 +201,25 @@ node plugins/bok-report-publisher/scripts/review.mjs list --repo C:/workspace/vu
 ```
 
 검증은 원본 셀 대조, 실제 렌더링 값·축 검사, 데스크톱/모바일 비교, 공통 파일 무변경을 분리합니다. 오너의 결과 수락 전에는 awaiting-review입니다.
+
+화면에서 다운로드한 피드백 JSON을 OpenSpec으로 가져오는 터미널 명령:
+
+```powershell
+node plugins/bok-report-publisher/scripts/review.mjs feedback --repo C:/workspace/vue-project/bok-vue-web --input C:/Users/jung3/Downloads/<검수ID>-feedback.json
+```
+
+`S039-C001` 같은 검수 ID, `그림 I-1` 같은 원문 번호, `BOK-123` 같은 Jira 키는 서로 다른 식별자입니다. 현재 등록부를 확인해 연결해야 하며 번호를 추측하지 않습니다.
+
+## 자주 막히는 경우
+
+- 스킬이 보이지 않음: Vue 프로젝트를 열었는지, 선택한 에이전트 설치 경로가 존재하는지 확인하고 새 세션을 시작합니다.
+- `Unmanaged skill exists`: 사용자 작성 동명 폴더가 있으므로 자동 덮어쓰기를 중단한 것입니다. 비교·백업 후 설치 대상을 결정하세요.
+- `Owner review required` / 보류 상태: 오너 판단을 `bok-spec`으로 반영한 후 범위를 선택합니다.
+- 승인 후 계획/원본 변경: 새 비교 리뷰와 승인 버전이 필요합니다. 해시를 수동 변경해 검사를 우회하지 않습니다.
+- Jira 인증 없음: 토큰을 채팅에 붙이지 말고 실행 환경에 설정합니다. Jira 없이 로컬 구현은 가능합니다.
+- 이미지가 있다고 구현 완료가 아님: 통계 차트는 실제 Highcharts 구현이어야 합니다. 원본 이미지는 비교용 증거입니다.
+
+현재 실차트 검증은 I-1 재사용 사례에 한정됩니다. 신규 복합 차트까지 완벽하게 생성한다고 보장하지 않으며, 각 작업마다 원본·화면 검증과 오너 수락이 필요합니다.
 
 ## 구조 / 테스트
 
