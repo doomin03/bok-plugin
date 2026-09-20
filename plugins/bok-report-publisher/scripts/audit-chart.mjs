@@ -1,0 +1,13 @@
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+const a=process.argv.slice(2), get=f=>{const i=a.indexOf(f);return i >= 0 ? a[i+1] : undefined}, sp=get("--spec"), dp=get("--data"), cp=get("--component");
+if(!sp||!dp) throw new Error("Usage: node audit-chart.mjs --spec <spec.json> --data <data.json> [--component <component.vue>]");
+const errors=[], warn=[];
+const json=(p,n)=>{try{return JSON.parse(readFileSync(resolve(p),"utf8"))}catch(e){errors.push(`${n} cannot be parsed: ${e.message}`);return null}};
+const spec=json(sp,"spec"), rows=json(dp,"data");
+if(spec){["figureId","title","source","period","series","expectations"].forEach(k=>{if(spec[k]==null||spec[k]==="")errors.push(`spec.${k} is required.`)});["workbook","sheet","attribution","headerRange","dataRange"].forEach(k=>{if(!spec.source?.[k])errors.push(`spec.source.${k} is required.`)});if(!Array.isArray(spec.series)||!spec.series.length)errors.push("spec.series must have at least one series.");(spec.series||[]).forEach((s,i)=>{["name","sourceColumn","outputKey","chartType","axis","nullPolicy"].forEach(k=>{if(s[k]==null||s[k]==="")errors.push(`spec.series[${i}].${k} is required.`)});if(!["left","right"].includes(s.axis))errors.push(`spec.series[${i}].axis must be left or right.`);if(s.nullPolicy!=="preserve")warn.push(`series '${s.name}' does not preserve nulls; confirm source authorization.`)});}
+if(!Array.isArray(rows)||!rows.length)errors.push("data must be a non-empty JSON array.");
+if(Array.isArray(rows)){const dates=new Set();rows.forEach((r,i)=>{if(!r||typeof r!=="object"||Array.isArray(r))errors.push(`data row ${i} must be an object.`);const d=String(r?.date??"").trim();if(!d)errors.push(`data row ${i} has no date.`);else if(dates.has(d))errors.push(`data contains duplicate date '${d}'.`);else dates.add(d);});}
+if(spec&&Array.isArray(rows))(spec.series||[]).forEach(s=>{const k=s.outputKey;if(rows.every(r=>!(k in r)))errors.push(`No data property '${k}' for series '${s.name}'.`);rows.forEach((r,i)=>{const v=r?.[k];if(v!==null&&v!==undefined&&v!==""&&!Number.isFinite(Number(v)))errors.push(`data row ${i} '${k}' is not numeric or null.`);});});
+if(cp){const p=resolve(cp);if(!existsSync(p))errors.push(`component does not exist: ${cp}`);else {const t=readFileSync(p,"utf8");if(spec?.expectations?.containerId&&!t.includes(`id="${spec.expectations.containerId}"`))errors.push("Component does not contain declared containerId.");if(!t.includes("initChart"))errors.push("Component does not define initChart().");}}
+warn.forEach(x=>console.warn(`WARN: ${x}`));errors.forEach(x=>console.error(`FAIL: ${x}`));if(errors.length)process.exit(1);console.log(`PASS: ${spec.figureId} (${rows.length} rows) passed declared structural checks.`);

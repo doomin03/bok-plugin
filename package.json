@@ -1,0 +1,13 @@
+{
+  "name": "bok-plugin-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test plugins/bok-report-publisher/tests/*.test.mjs",
+    "review:init": "node plugins/bok-report-publisher/scripts/review.mjs init",
+    "review:dev": "node plugins/bok-report-publisher/scripts/review.mjs dev",
+    "review:build": "node plugins/bok-report-publisher/scripts/review.mjs build",
+    "review:list": "node plugins/bok-report-publisher/scripts/review.mjs list",
+    "review:feedback": "node plugins/bok-report-publisher/scripts/review.mjs feedback"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "bok-report-publisher",
+  "version": "0.1.0+codex.20260920160836",
+  "description": "Build and verify Bank of Korea report pages from DOCX and Excel source data.",
+  "author": {
+    "name": "BOK Web Publishing Team"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "BOK Report Publisher",
+    "shortDescription": "Source-driven BOK report publishing and chart checks.",
+    "longDescription": "Turns BOK report source documents and figure workbooks into traceable Vue and Highcharts publishing tasks, then validates data and implementation.",
+    "developerName": "BOK Web Publishing Team",
+    "category": "Productivity",
+    "capabilities": [
+      "Write",
+      "Review"
+    ],
+    "defaultPrompt": "Create a source-backed chart specification and implementation plan for this BOK report figure."
+  }
+}
