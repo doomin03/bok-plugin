@@ -11,6 +11,8 @@ Turn an approved BOK report source package into a traceable web implementation. 
 
 Canonical workflow: bok-start creates an owner comparison review; bok-spec applies the owner's decisions; bok-implement selects scope; bok-chart builds; bok-verify verifies; bok-feedback records corrections. Read references/owner-workflow.md. No owner approval means no implementation. A direct user approval of a concrete proposed chart strategy may be recorded, but never invent approval from silence.
 
+Owner-configured donor projects come from docs/comparison-targets.json or report-specific docs/<report>/comparison-targets.json, with an explicitly supplied configuration path taking precedence. Read references/image-comparison.md for required projectPath, description and sourcePaths, candidate mapping and comparison artifacts. Never infer a donor project from the current checkout alone.
+
 Before any implementation, read [mandatory fidelity contract](references/fidelity-contract.md). Existing UI and shared source are immutable; only source content and chart internals may change. Do not add data-table controls or new styles. For whole-document preparation use ../bol-start/SKILL.md; for verification or feedback use ../bol-verify/SKILL.md or ../bol-feedback/SKILL.md.
 
 Identify the report DOCX, figure-data XLSX, target report surface, and target branch/commit. Source documents are managed under `<repo>/docs/<report>/` (one `.docx`, one `.xlsx`); bol-start reads that location by default. Create one open chart specification from `assets/chart-spec.template.json` for each figure. Record the source sheet, exact data/header range, unit, period, caption/source note, series mapping, forecast rule and expected target files. Never infer economic semantics from a screenshot.

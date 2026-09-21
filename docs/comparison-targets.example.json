@@ -1,0 +1,12 @@
+{
+  "targets": [
+    {
+      "id": "existing-report",
+      "projectPath": "C:/workspace/vue_project/existing-project",
+      "description": "오너 작성: 기존 통화신용정책 보고서. 세계경제 관련 차트의 계열 구성, 축·단위, 범례와 반응형 구현을 비교할 대상",
+      "sourcePaths": ["src/pages/report/components/toc"],
+      "ref": "feature",
+      "previewUrl": "http://localhost:5173/report.html"
+    }
+  ]
+}
