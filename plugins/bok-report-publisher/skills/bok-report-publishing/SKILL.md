@@ -37,3 +37,14 @@ powershell -ExecutionPolicy Bypass -File scripts/verify-report.ps1 -Repo C:\work
 The chart audit checks structural parity with the declared contract; it does not prove source-column meaning. After a visual change, inspect desktop and mobile and compare title, unit, series, axes, forecast style, date labels, values, caption and source note to the source package. Record feedback as figure ID, severity, source evidence, target location, observed result, expected result, and smallest corrective change.
 
 Report figures implemented, source sheet mappings, checks run, results, and unresolved ambiguities. Do not claim data parity unless the declared mappings and values were reviewed.
+
+## Output locations
+
+All generated documents are written under the target repository (`<repo>`), never the plugin. Canonical paths:
+
+- Owner review (the reference document): `<repo>/openspec/changes/bok-owner-review-<report>/owner-review.md` with `review.json`, `approved.json`, superseded drafts in `drafts/`, and immutable approvals in `revisions/<hash>/` (`decisions.json`, `proposal.md`, `design.md`, `tasks.md`, `specs/owner-decisions/spec.md`).
+- Source comparison images (private evidence): `<repo>/openspec/changes/bok-owner-review-<report>/evidence/source-images/`. Never public assets.
+- Jira/local implementation specs: `<repo>/openspec/changes/<jira-key-lowercase>-<slug>/` (or `local-<slug>/` before Jira) with `scope.json`, `proposal.md`, `design.md`, `tasks.md`, `specs/report-unit/spec.md`.
+- Numbered review feedback changes: `<repo>/openspec/changes/review-<id>-<hash>/`; the number registry is `<repo>/.bok-review/registry.json`.
+- Jira key ledger: `<repo>/.bok-jira/<report>.json`.
+- Implemented chart data: `<repo>/src/pages/report/components/toc/**/graphData/*.json`, beside the Vue component.

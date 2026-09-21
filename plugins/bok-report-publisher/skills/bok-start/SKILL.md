@@ -11,7 +11,8 @@ Identify the previous monetary-policy branch and resolve its immutable commit wi
 Read ../bok-chart/references/monetary-policy-patterns.md for the inspected repository patterns.
 Create a unit-plan.json: one unit per body/notes/chart/table/image, with slug, kind, title, section, files, sourceRefs and acceptance.
 For chart units also record strategy (reuse/new/undecided), baseline {branch,commit,files}, comparison (series/type/axes/units/period/annotations/responsive differences), sourceEvidence (repo-relative evidence files), and questions.
-A visually similar picture or historical numeric match alone does not prove reuse suitability.
+AI judges similarity first, the human decides after. For every chart unit run scripts/match-chart-data.py --repo <repo> --source <extracted-source> --out <matches.json> to get exact historical column candidates, then record a `similarity` field: the candidate donors, your series/shape/period/unit assessment and a confidence, ending with a proposed strategy. workflow.mjs prepare renders `similarity` as "AI 유사성 판단" above the empty "오너 결정"/"오너 의견" so the owner reviews the AI judgment and writes the manual decision.
+A visually similar picture or historical numeric match alone does not prove reuse suitability; the exact matcher and your similarity note are inputs to the owner, never an approval.
 Keep source images under OpenSpec evidence, never public assets or a chart fallback. Distinguish genuine photos/diagrams from statistical charts.
 On Windows render a comparison with scripts/render-comparison.ps1 -Repo <repo> -Change <change-id> -SourceImage <extracted image>. It only writes under the change's evidence/source-images. Link that PNG in owner-review.md, not in Vue.
 Run workflow.mjs prepare --repo <repo> --plan <plan>.

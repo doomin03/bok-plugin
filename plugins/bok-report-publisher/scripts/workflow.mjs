@@ -37,10 +37,11 @@ export function prepare(repo,plan,{revise=false}={}){
  const draft={report:plan.report,planHash:hash(plan),units:plan.units.map(u=>({
   slug:u.slug,title:u.title,unitHash:hash(u),kind:u.kind,sourceRefs:u.sourceRefs,
   proposed:u.strategy||'undecided',baseline:u.baseline||null,comparison:u.comparison||'Not compared',
+  similarity:u.similarity||'AI 유사성 판단 미기록 (bok-start가 채워야 함)',
   questions:u.questions||[],decision:'pending',ownerComment:'',acceptance:u.acceptance
  }))};
  write(file,draft);
- fs.writeFileSync(path.join(dir,'owner-review.md'),'# 오너 비교 리뷰\n\n아직 구현 승인이 아닙니다. 그림별 원본 비교 이미지, 이전 분기 소스/커밋, 계열·축·단위 차이를 확인해 reuse / new / hold와 의견을 작성하세요. 원본 이미지는 개발 증거이며 사이트에 표시하지 않습니다.\n\n'+draft.units.map(u=>'## '+u.slug+' — '+u.title+'\n\n제안: '+u.proposed+'\n\n비교: '+u.comparison+'\n\n근거: '+u.sourceRefs.join(', ')+'\n\n질문: '+u.questions.join('; ')+'\n\n오너 결정: 미작성\n\n오너 의견: \n').join('\n'));
+ fs.writeFileSync(path.join(dir,'owner-review.md'),'# 오너 비교 리뷰\n\n아직 구현 승인이 아닙니다. AI가 먼저 각 단위의 유사성을 판단해 아래 "AI 유사성 판단"과 "AI 제안"에 기록했습니다. 그림별 원본 비교 이미지, 이전 분기 소스/커밋, 계열·축·단위 차이와 함께 이를 검토한 뒤 "오너 결정"(reuse / new / hold)과 "오너 의견"을 직접 작성하세요. 원본 이미지는 개발 증거이며 사이트에 표시하지 않습니다.\n\n'+draft.units.map(u=>'## '+u.slug+' — '+u.title+'\n\nAI 제안: '+u.proposed+'\n\nAI 유사성 판단: '+u.similarity+'\n\n비교: '+u.comparison+'\n\n근거: '+u.sourceRefs.join(', ')+'\n\n질문: '+u.questions.join('; ')+'\n\n오너 결정: 미작성\n\n오너 의견: \n').join('\n'));
  return draft;
 }
 export function applyReview(repo,plan,decisions,authorization){

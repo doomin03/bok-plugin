@@ -4,6 +4,7 @@ bok-start -> owner review -> bok-spec -> explicit scope -> bok-implement -> bok-
 Jira creation is optional and separate via bok-jira after review.
 
 Start creates owner-review.md and review.json from unit-plan.json. It must include source comparisons, prior branch+commit, donor candidates and unresolved questions.
+AI similarity is judged first: bok-start runs match-chart-data.py for exact donor candidates and records each chart unit's `similarity`, rendered as "AI 유사성 판단"/"AI 제안" above the empty owner decision. High similarity proposes reuse (copy the donor component, change only source-backed internals); the owner still decides manually.
 Owner edits markdown or replies in chat. The agent normalizes the actual response to decisions.json with planHash, owner and decisions [{slug,decision,comment}]. Never auto-approve.
 workflow.mjs apply stores immutable revision directories and the current decision pointer under openspec/changes/bok-owner-review-<report>/.
 workflow.mjs gate requires selected approved units and rejects hold, missing approval, plan changes and changed source evidence.
