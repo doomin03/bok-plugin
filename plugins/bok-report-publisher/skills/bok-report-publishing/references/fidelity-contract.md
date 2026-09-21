@@ -18,6 +18,8 @@ Do not copy obsolete forecast periods or old numeric captions. Record unresolved
 
 ## Gates
 
+Follow notes-and-responsive-verification.md for body-note source mapping/click behavior, inherited table structure, source-image axis/series parity and the mobile/tablet/PC evidence matrix. Existing note UI is frozen shared structure too. Neither image similarity nor a frozen-file hash proves correct note behavior or responsive rendering.
+
 For each chart, check donor-normalized template/style, frozen shared files, axis units (desktop/mobile), label/legend placement, lazy mount and cleanup, actual rendered values versus source cells and responsive screenshots. Record deviations explicitly. Build success alone is insufficient.
 
 Use scripts/verify-fidelity.mjs with a reviewed inheritance contract when available. Its expected-source hash locks the approved component; update it only after reviewing the precise source-derived delta, not to silence failure. It is an integrity check, not a semantic/visual oracle.

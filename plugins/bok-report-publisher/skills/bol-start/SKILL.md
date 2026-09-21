@@ -27,6 +27,7 @@ After extraction:
 1. Read manifest.json, document.json, toc.json, workbook.json and work-items.json.
 2. Reconcile every TOC row and figure with document blocks, media relationships, sheet ranges and a matching existing component. Populate each item spec; never label candidate mapping as verified.
 3. For every section, preserve body order and note markers, assign its text/table/image/chart tasks. For each chart record source cells, axis assignment, units, nulls, period, reference image, and donor path/hash.
+   Read ../bok-report-publishing/references/notes-and-responsive-verification.md. Use schema-3 inlineParagraphs/noteLinks to locate each marker; confirm visible numbering from the original document and prepare note-map.json. Include mobile/tablet/PC and note-click acceptance conditions. Re-extract older schema-2 packages without overwriting prior evidence.
 4. Use existing sections and shared chart UI as immutable authorities. No new card, data-table toggle, CSS, axis-label positioning or wrapper.
 5. Keep unresolved mapping/rendering items pending. Extracting WMF/EMF does not mean visual verification. Report inventory counts separately from implemented/verified counts.
 

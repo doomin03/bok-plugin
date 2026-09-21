@@ -15,6 +15,7 @@ S = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 R = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 P = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
+SOURCE_SCHEMA = 3
 
 
 def walk(node):
@@ -48,6 +49,21 @@ def text(node, prefix=W):
     return "".join(n.text or "" for n in walk(node) if n.tag == prefix + "t")
 
 
+def inline_content(node):
+    """Preserve marker positions; OOXML note IDs are keys, not display numbers."""
+    result = []
+    for child in walk(node):
+        if child.tag == W + 't':
+            result.append({'kind': 'text', 'text': child.text or ''})
+        elif child.tag in (W + 'br', W + 'cr', W + 'tab'):
+            result.append({'kind': 'text', 'text': '\t' if child.tag == W + 'tab' else '\n'})
+        elif child.tag in (W + 'footnoteReference', W + 'endnoteReference'):
+            result.append({'kind': 'note-reference', 'noteType': child.tag.split('}')[-1].replace('Reference', ''),
+                           'sourceId': child.get(W + 'id'),
+                           'customMarkFollows': child.get(W + 'customMarkFollows')})
+    return result
+
+
 def normalized(value):
     return re.sub(r"\s+", "", unicodedata.normalize("NFKC", value)).casefold()
 
@@ -77,6 +93,8 @@ def document(path, root, toc_index):
             block = {"id": f"B{index+1:04}", "kind": node.tag.split("}")[-1],
                      "text": text(node), "references": images,
                      "footnoteIds": [x.get(W+"id") for x in node.iter(W+"footnoteReference")],
+                     "endnoteIds": [x.get(W+"id") for x in node.iter(W+"endnoteReference")],
+                     "inlineParagraphs": [inline_content(p) for p in walk(node) if p.tag == W+"p"],
                      "paragraphs": [text(p) for p in walk(node) if p.tag == W+"p"],
                      "nestedTables": [[[text(c) for c in row.findall(W+"tc")]
                                        for row in table.findall(W+"tr")]
@@ -106,9 +124,28 @@ def document(path, root, toc_index):
         for name in ("footnotes", "endnotes"):
             member = f"word/{name}.xml"
             if member in z.namelist():
-                notes[name] = [{"id": n.get(W+"id"), "text": text(n)} for n in xml(z, member)]
+                notes[name] = []
+                for n in xml(z, member):
+                    if n.get(W+'type', 'normal') != 'normal':
+                        continue  # Separators remain in raw XML, never become clickable notes.
+                    paragraphs = [''.join(t.get('text', '') for t in inline_content(p))
+                                  for p in walk(n) if p.tag == W+'p']
+                    notes[name].append({'id': n.get(W+'id'), 'text': '\n'.join(paragraphs),
+                                        'paragraphs': paragraphs, 'sourcePart': member})
+        note_links = []
+        for block in blocks:
+            for paragraph_index, tokens in enumerate(block['inlineParagraphs']):
+                for token_index, token in enumerate(tokens):
+                    if token['kind'] != 'note-reference':
+                        continue
+                    matches = [n for n in notes.get(token['noteType']+'s', []) if n['id'] == token['sourceId']]
+                    note_links.append({**token, 'sourceBlock': block['id'], 'paragraphIndex': paragraph_index,
+                                       'tokenIndex': token_index, 'displayLabel': None,
+                                       'status': 'needs-display-mapping' if len(matches) == 1 else 'unresolved',
+                                       'text': matches[0]['text'] if len(matches) == 1 else None})
         result = {"blocks": blocks, "tables": tables, "notes": notes,
-                  "relationships": relationships, "media": media}
+                  "relationships": relationships, "media": media, 'noteLinks': note_links,
+                  'noteNumbering': 'Resolve visible labels from rendered DOCX and numbering settings; never use sourceId as display label.'}
         save(root, "document.json", result)
         toc = [{"id": f"TOC{i+1:03}", "cells": row, "sourceBlock": tables[toc_index]["id"],
                 "status": "needs-section-mapping"} for i, row in enumerate(tables[toc_index]["rows"])
@@ -175,7 +212,7 @@ def run(args):
             setattr(args, key, str(found[0]))
     sources = {key: {"path": str(Path(getattr(args, key)).resolve()),
                      "sha256": digest(Path(getattr(args, key)).read_bytes())} for key in ("docx", "xlsx")}
-    fingerprint = digest(json.dumps({"sources": sources, "toc": args.toc_table, "schema": 2}, sort_keys=True).encode())[:12]
+    fingerprint = digest(json.dumps({"sources": sources, "toc": args.toc_table, "schema": SOURCE_SCHEMA}, sort_keys=True).encode())[:12]
     change = repo / "openspec" / "changes" / f"bol-start-{args.report}-{fingerprint}"
     if change.exists():
         if not (change / "manifest.json").exists():
@@ -230,7 +267,9 @@ def run(args):
                     "status": "needs-mapping-review",
                     "acceptance": ["Exact source-cell parity including nulls and formula caches",
                                    "Existing wrappers, LazyChart, styles, labels and mobile options unchanged",
-                                   "Inspect original figure and desktop/mobile output"]}
+                                   "Inspect original figure and mobile/tablet/desktop output",
+                                   "Verify both Y-axis units, X ticks, all series and legend against source",
+                                   "Verify body note clicks show exact source note text"]}
         contracts.append(contract)
         save(change, "charts/"+sheet["id"]+".json", contract)
         for section in sections:
@@ -252,7 +291,7 @@ def run(args):
                 frozen[file.relative_to(repo).as_posix()] = digest(file.read_bytes())
     save(change, "frozen-source.json", frozen)
     commit = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
-    manifest = {"schema": 2, "report": args.report, "sources": sources, "baselineCommit": commit,
+    manifest = {"schema": SOURCE_SCHEMA, "report": args.report, "sources": sources, "baselineCommit": commit,
                 "tocTableIndex": args.toc_table,
                 "counts": {"bodyBlocks": len(doc["blocks"]), "tables": len(doc["tables"]),
                            "tocRows": len(toc), "media": len(doc["media"]), "sheets": len(wb["sheets"]),

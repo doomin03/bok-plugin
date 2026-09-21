@@ -11,6 +11,39 @@ spec.loader.exec_module(starter)
 
 
 class SourcePreparationTests(unittest.TestCase):
+    def test_note_positions_text_and_internal_ids(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'notes.docx'
+            ns = starter.W[1:-1]
+            with zipfile.ZipFile(source, 'w') as z:
+                z.writestr('word/document.xml', f'<w:document xmlns:w="{ns}"><w:body>'
+                    '<w:p><w:r><w:t>미국 소비</w:t></w:r><w:r><w:footnoteReference w:id="42"/></w:r>'
+                    '<w:r><w:t> 이후</w:t></w:r><w:r><w:endnoteReference w:id="42"/></w:r>'
+                    '<w:r><w:footnoteReference w:id="99"/></w:r></w:p>'
+                    '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>목차</w:t></w:r>'
+                    '<w:r><w:footnoteReference w:id="42"/></w:r></w:p></w:tc></w:tr></w:tbl>'
+                    '</w:body></w:document>')
+                z.writestr('word/footnotes.xml', f'<w:footnotes xmlns:w="{ns}">'
+                    '<w:footnote w:id="-1" w:type="separator"><w:p/></w:footnote>'
+                    '<w:footnote w:id="42"><w:p><w:r><w:t>1/4분기 4.9 → 8.4</w:t><w:br/><w:t>둘째 줄</w:t></w:r></w:p>'
+                    '<w:p><w:r><w:t>다음 문단</w:t></w:r></w:p></w:footnote></w:footnotes>')
+                z.writestr('word/endnotes.xml', f'<w:endnotes xmlns:w="{ns}"><w:endnote w:id="42"><w:p><w:r><w:t>미주</w:t></w:r></w:p></w:endnote></w:endnotes>')
+            doc, _ = starter.document(source, root / 'out', 0)
+            tokens = doc['blocks'][0]['inlineParagraphs'][0]
+            self.assertEqual([t['kind'] for t in tokens[:3]], ['text', 'note-reference', 'text'])
+            self.assertEqual(len(doc['notes']['footnotes']), 1)
+            self.assertEqual(doc['notes']['footnotes'][0]['text'], '1/4분기 4.9 → 8.4\n둘째 줄\n다음 문단')
+            links = doc['noteLinks']
+            self.assertEqual(len(links), 4)
+            self.assertIsNone(links[0]['displayLabel'])
+            self.assertEqual(links[0]['sourceId'], '42')
+            self.assertEqual(links[0]['tokenIndex'], 1)
+            self.assertEqual(links[1]['text'], '미주')
+            self.assertEqual(links[2]['status'], 'unresolved')
+            self.assertEqual(links[3]['sourceBlock'], 'B0002')
+            self.assertTrue((root / 'out/docx-original/word/footnotes.xml').exists())
+
     def test_word_alternate_content_is_not_double_counted(self):
         node = starter.ET.fromstring(
             f'<w:p xmlns:w="{starter.W[1:-1]}" xmlns:mc="{starter.MC[1:-1]}">'

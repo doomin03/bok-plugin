@@ -29,6 +29,8 @@ Read [repository contract](references/repository-contract.md) before changing co
 
 ## Required checks
 
+Read [note mapping and responsive verification](references/notes-and-responsive-verification.md) before preparation, implementation or verification. Preserve exact body note positions and visible labels, connect them to the existing note UI, and click-test every selected note against source text. Charts/tables require mobile, tablet and PC checks including actual project breakpoint boundaries, both Y-axis units, X ticks and all series. Record failures/pending evidence separately from owner acceptance.
+
 ```powershell
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json --component path/to/GraphComponent.vue

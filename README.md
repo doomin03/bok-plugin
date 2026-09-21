@@ -165,6 +165,10 @@ Claude Code에서는 동일 문장에서 `$bok-...`를 `/bok-...`로 바꾸면 �
 
 ## 산출물과 승인 검사
 
+각주·차트·표는 [각주 연결 및 반응형 검증 계약](plugins/bok-report-publisher/skills/bok-report-publishing/references/notes-and-responsive-verification.md)을 따릅니다. 본문의 각주 참조 위치와 문서 표시 번호를 확인하여 기존 각주 UI에 전문을 연결하고 실제 클릭 결과를 대조합니다. 모바일 375px, 태블릿 768px/1024px, PC 1440px와 기존 breakpoint 경계에서 좌우 Y축 단위·X축 눈금·계열·범례·표 스크롤을 검증합니다. 화면 증거가 없으면 pending이며 추출/빌드 성공만으로 통과하지 않습니다.
+
+원본 추출 schema 3은 각주 위치(`inlineParagraphs`, `noteLinks`), 미주 참조와 각주 문단·줄바꿈을 보존합니다. DOCX 내부 ID를 표시 번호로 쓰지 않습니다. 기존 schema 2 산출물은 같은 추출 명령을 다시 실행하면 별도 패키지로 생성되어 과거 증거를 보존합니다.
+
 차트·사진 비교는 `bok-start`와 `bok-verify`에서 항목별 분석과 함께 `comparison.html`, `review.md`, `metrics.json`을 생성합니다. HTML은 원본/대상 나란히 보기, 겹침 슬라이더, 차이 이미지와 픽셀 유사도를 제공합니다. 기존 `owner-review.md`는 오너 결정용으로 유지합니다. Python Pillow가 필요하며 상세 입력·실행 방법은 [이미지 비교 안내](plugins/bok-report-publisher/skills/bok-report-publishing/references/image-comparison.md)를 참고하세요. 점수는 데이터 정확성이나 자동 승인 기준이 아닙니다.
 
 `openspec/changes/bok-owner-review-<report>/`:

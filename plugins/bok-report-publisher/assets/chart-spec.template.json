@@ -1,1 +1,36 @@
-{"figureId":"I-01","reportSection":"","title":"","caption":"","source":{"document":"O_1. 2026년 9월 통화신용정책보고서.docx","workbook":"O_3. 그림 원본 데이터.xlsx","sheet":"Ⅰ-1","attribution":"","headerRange":"","dataRange":""},"period":{"frequency":"monthly","start":"","end":"","timezone":"UTC"},"unit":"","series":[{"name":"","sourceColumn":"","outputKey":"","chartType":"line","axis":"left","colour":"","precision":1,"nullPolicy":"preserve","forecast":{"startsAt":"","style":""}}],"expectations":{"dataFile":"","component":"","containerId":"","requiredLabels":[]},"reviewChecklist":["Caption, source, unit, period and series match the source.","Nulls and provisional markers use the documented policy.","Desktop and mobile rendering have no clipping or overlaps."]}
+{
+  "figureId": "I-01",
+  "reportSection": "",
+  "title": "",
+  "caption": "",
+  "source": {"document": "", "workbook": "", "sheet": "", "attribution": "", "headerRange": "", "dataRange": "", "referenceImage": ""},
+  "period": {"frequency": "monthly", "start": "", "end": "", "timezone": "UTC"},
+  "unit": "",
+  "series": [{"name": "", "sourceColumn": "", "outputKey": "", "chartType": "line", "axis": "left", "colour": "", "precision": 1, "nullPolicy": "preserve", "forecast": {"startsAt": "", "style": ""}}],
+  "expectations": {"dataFile": "", "component": "", "containerId": "", "requiredLabels": []},
+  "visualContract": {
+    "status": "pending",
+    "yAxes": [],
+    "xAxis": {"type": "", "ticks": [], "labelFormat": "", "sourceEvidence": ""},
+    "seriesAppearance": [],
+    "legend": {"order": [], "placement": "", "wrapping": ""},
+    "annotations": [],
+    "inheritedResponsiveFiles": [],
+    "breakpoints": [],
+    "viewports": [
+      {"name": "mobile", "width": 375, "height": 812, "status": "pending"},
+      {"name": "tablet-portrait", "width": 768, "height": 1024, "status": "pending"},
+      {"name": "tablet-landscape", "width": 1024, "height": 768, "status": "pending"},
+      {"name": "desktop", "width": 1440, "height": 900, "status": "pending"}
+    ]
+  },
+  "reviewChecklist": [
+    "Caption, source, unit, period and every series match the source cells and figure.",
+    "Both Y-axis units, bounds and ticks, X labels, legend and annotations are compared to the source image.",
+    "Nulls and provisional markers use the documented policy.",
+    "Existing wrappers, shared styles and responsive helpers retain their recorded hashes.",
+    "Mobile, tablet portrait/landscape, desktop and inherited breakpoint boundaries have browser evidence.",
+    "Every applicable body note opens the exact source text through the existing note UI.",
+    "Unverified checks stay pending; owner acceptance is recorded separately."
+  ]
+}
