@@ -4,6 +4,7 @@ description: Implement only explicitly selected BOK Jira tickets, comma-separate
 ---
 
 # Scoped implementation
+For selected-unit regression tests use ../bok-test/SKILL.md, preserving existing runner and component conventions. Add source-backed behavior assertions rather than snapshot-only tests.
 
 Before implementation read references/owner-workflow.md under bok-report-publishing and run workflow.mjs gate for selected units. If absent, route through bok-start and bok-spec; do not approve your own proposal. Use ../bok-chart/SKILL.md for the reuse/new decision and implementation, and ../bok-verify/SKILL.md for checks. Do not run retired bulk site generators. Both strategies produce actual charts, never source-image fallbacks.
 

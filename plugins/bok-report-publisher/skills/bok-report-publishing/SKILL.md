@@ -29,6 +29,8 @@ Read [repository contract](references/repository-contract.md) before changing co
 
 ## Required checks
 
+For Vue component tests, real-browser behavior and screenshot regression use ../bok-test/SKILL.md and references/browser-testing.md. External Vue/Playwright practices are integrated there without requiring global third-party skill installation.
+
 Read [note mapping and responsive verification](references/notes-and-responsive-verification.md) before preparation, implementation or verification. Preserve exact body note positions and visible labels, connect them to the existing note UI, and click-test every selected note against source text. Charts/tables require mobile, tablet and PC checks including actual project breakpoint boundaries, both Y-axis units, X ticks and all series. Record failures/pending evidence separately from owner acceptance.
 
 ```powershell

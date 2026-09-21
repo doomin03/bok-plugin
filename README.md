@@ -14,6 +14,7 @@ Claude Code는 `/bok-start`, Codex는 `$bok-start`처럼 스킬을 지정합니�
 | bok-implement | 선택한 그림·로컬 단위·티켓만 구현 | 범위 자동 확대 |
 | bok-chart | 승인된 재사용 또는 신규 차트 개발 | 원본 이미지로 차트 대체 |
 | bok-verify | 원본 값·실제 차트·기존 UI·모바일 검증 | 빌드만 성공했다고 완료 처리 |
+| bok-test | Vue 동작 테스트·각주 클릭·기기별 브라우저 검사·선택적 화면 회귀 테스트 | 기존 UI 재설계, 기준 이미지 자동 승인 |
 | bok-feedback | 차트 번호와 테스트 조건을 수정 OpenSpec으로 연결 | 요청 없이 전체 수정 |
 
 `bol-start`, `bol-verify`, `bol-feedback`는 기존 호출 호환용입니다. 신규 흐름은 bok 명령을 사용하세요.
@@ -246,6 +247,10 @@ node plugins/bok-report-publisher/scripts/review.mjs feedback --repo C:/workspac
 
 ## 구조 / 테스트
 
+외부 Vue 테스트·브라우저 검증 방식을 BOK에 맞게 적용한 `bok-test` 스킬과 Playwright 템플릿이 포함됩니다. 별도 외부 스킬 설치 없이 기존 프로젝트 스킬 설치 명령으로 함께 배포됩니다. `bok-implement`/`bok-verify`에서 연결되며 `/bok-test` 또는 `$bok-test`로 선택 범위 테스트를 요청할 수 있습니다. [출처·적용 범위·실행 가이드](plugins/bok-report-publisher/skills/bok-report-publishing/references/browser-testing.md)를 참고하세요. 대상 프로젝트의 Playwright 의존성·브라우저·실제 선택자 설정은 필요합니다.
+
+실행 템플릿은 `plugins/bok-report-publisher/assets/browser-tests/`에 있습니다. 기본 기능 검증과 캡처를 제공하며, Highcharts 런타임 데이터·표·세부 접근성 검증은 프로젝트에 맞는 테스트를 추가합니다. 시각 회귀는 검토된 기준 이미지가 있을 때 사용합니다.
+
 ```text
 plugins/bok-report-publisher/
   .codex-plugin/plugin.json
@@ -269,6 +274,12 @@ plugins/bok-report-publisher/
 npm test
 py -3 -X utf8 plugins/bok-report-publisher/tests/test_start_report.py
 py -3 -X utf8 plugins/bok-report-publisher/tests/test_compare_images.py
+```
+
+브라우저 템플릿 자체 검증은 `@playwright/test`가 설치된 별도 폴더를 인자로 전달합니다. 기본 브라우저는 Edge이며 다른 설치 브라우저는 `BOK_BROWSER_CHANNEL`로 지정합니다. 네 viewport 성공, 잘못된 각주 기대값 실패, 원복 후 성공을 확인합니다. 테스트용 HTML 검증이며 실제 보고서의 시각 일치를 뜻하지 않습니다.
+
+```powershell
+node plugins/bok-report-publisher/tests/browser-template-smoke.mjs <Playwright가 설치된 폴더>
 ```
 
 상세 정책: [작업 흐름](plugins/bok-report-publisher/skills/bok-report-publishing/references/owner-workflow.md), [기존 브랜치 차트 패턴](plugins/bok-report-publisher/skills/bok-chart/references/monetary-policy-patterns.md), [UI 유지 계약](plugins/bok-report-publisher/skills/bok-report-publishing/references/fidelity-contract.md).

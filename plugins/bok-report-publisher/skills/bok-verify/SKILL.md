@@ -4,6 +4,7 @@ description: Verify selected BOK report charts against source cells, previous-re
 ---
 
 # Verify selected units
+Use ../bok-test/SKILL.md when writing or running component/browser regression tests. It provides BOK-adapted external Vue/Playwright practices and runnable templates; keep source and visual verification below as separate requirements.
 Mandatory: read ../bok-report-publishing/references/notes-and-responsive-verification.md and execute every applicable check for the selected units. Include 375px mobile, 768px tablet portrait, 1024px tablet landscape and 1440px PC, plus inherited breakpoint boundaries; record actual container widths and screenshots. Click every mapped body note and compare full source text in the existing popup/panel; verify table structure/scrolling and both Y-axis units, X ticks, series, legends and annotations against source images and runtime values. Missing browser evidence is pending, never pass. This applies to body, notes and table units as well as charts.
 Read ../bok-chart/references/monetary-policy-patterns.md and ../bok-report-publishing/references/fidelity-contract.md.
 Keep four outcomes separate: source data parity, runtime/visual verification, frozen source integrity, owner acceptance.
