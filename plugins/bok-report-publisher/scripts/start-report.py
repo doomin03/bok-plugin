@@ -165,6 +165,14 @@ def run(args):
         raise ValueError("Target repository must have src/")
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", args.report):
         raise ValueError("Invalid report ID")
+    # Source docs are managed under the docs/<report>/ convention unless an explicit path is given.
+    docs_dir = repo / "docs" / args.report
+    for key, ext in (("docx", ".docx"), ("xlsx", ".xlsx")):
+        if not getattr(args, key):
+            found = sorted(p for p in docs_dir.glob("*" + ext) if p.is_file() and not p.name.startswith("~$"))
+            if len(found) != 1:
+                raise ValueError(f"Provide --{key} or place exactly one {ext} in {docs_dir} (found {len(found)})")
+            setattr(args, key, str(found[0]))
     sources = {key: {"path": str(Path(getattr(args, key)).resolve()),
                      "sha256": digest(Path(getattr(args, key)).read_bytes())} for key in ("docx", "xlsx")}
     fingerprint = digest(json.dumps({"sources": sources, "toc": args.toc_table, "schema": 2}, sort_keys=True).encode())[:12]
@@ -268,7 +276,9 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    for key in ("repo", "report", "docx", "xlsx"):
+    for key in ("repo", "report"):
         parser.add_argument("--"+key, required=True)
+    for key in ("docx", "xlsx"):  # optional: default to the docs/<report>/ convention
+        parser.add_argument("--"+key)
     parser.add_argument("--toc-table", type=int, required=True)
     run(parser.parse_args())

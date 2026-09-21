@@ -13,7 +13,7 @@ Canonical workflow: bok-start creates an owner comparison review; bok-spec appli
 
 Before any implementation, read [mandatory fidelity contract](references/fidelity-contract.md). Existing UI and shared source are immutable; only source content and chart internals may change. Do not add data-table controls or new styles. For whole-document preparation use ../bol-start/SKILL.md; for verification or feedback use ../bol-verify/SKILL.md or ../bol-feedback/SKILL.md.
 
-Identify the report DOCX, figure-data XLSX, target report surface, and target branch/commit. Create one open chart specification from `assets/chart-spec.template.json` for each figure. Record the source sheet, exact data/header range, unit, period, caption/source note, series mapping, forecast rule and expected target files. Never infer economic semantics from a screenshot.
+Identify the report DOCX, figure-data XLSX, target report surface, and target branch/commit. Source documents are managed under `<repo>/docs/<report>/` (one `.docx`, one `.xlsx`); bol-start reads that location by default. Create one open chart specification from `assets/chart-spec.template.json` for each figure. Record the source sheet, exact data/header range, unit, period, caption/source note, series mapping, forecast rule and expected target files. Never infer economic semantics from a screenshot.
 
 Use `scripts/catalog-source-data.py` to review an XLSX sheet. Keep unavailable source values as `null`, never zero or an empty string.
 
