@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import csv
 from pathlib import Path
 import tempfile
 import unittest
@@ -57,11 +58,19 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(result[1]['status'], 'pending')
             self.assertIsNone(result[1]['metrics'])
             document = (output / 'comparison.html').read_text(encoding='utf-8')
-            self.assertNotIn('<script>', document)
+            self.assertNotIn('<script>alert(1)</script>', document)
+            self.assertIn('id="apply-review-0"', document)
+            self.assertIn('CSV 불러오기', document)
             self.assertIn('data:image/png;base64,', document)
             self.assertIn('type="range"', document)
             self.assertIn('축 차이 확인', (output / 'review.md').read_text(encoding='utf-8'))
             self.assertEqual(len(json.loads((output / 'metrics.json').read_text(encoding='utf-8'))['items']), 2)
+            with (output / 'comparison-review.csv').open(encoding='utf-8-sig', newline='') as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(rows[0]['similarity_percent'], '100')
+            self.assertEqual(rows[1]['similarity_percent'], '')
+            self.assertEqual(rows[1]['status'], 'pending')
+            self.assertEqual(rows[0]['evidence_id'], result[0]['evidenceId'])
             with self.assertRaises(FileExistsError):
                 module.generate(manifest, output)
 

@@ -6,6 +6,7 @@ description: Apply a BOK report owner's comparison review to revisioned OpenSpec
 # Apply the owner's review
 Read ../bok-report-publishing/SKILL.md and its references/owner-workflow.md.
 Read owner-review.md, review.json, unit-plan.json and the owner's actual response. Do not infer approval from silence or a generated default.
+Also read the owner's latest comparison-review.csv if supplied from the comparison HTML. Verify its id/evidence_id against metrics.json and carry review comments into the relevant unit's discussion. CSV save timestamps and similarity scores do not constitute approval. A request such as splitting one chart into two requires revising the affected plan before applying owner decisions.
 Translate only the owner's decisions to decisions.json: planHash, owner, decisions [{slug,decision: reuse|new|hold,comment}].
 Resolve questions and correct source mapping/comparison first; if the plan materially changes, run workflow.mjs prepare --revise with the updated plan to archive the previous draft and ask the owner to review the changed proposal. Never rewrite an approved plan hash to bypass the gate.
 Run workflow.mjs apply --repo <repo> --plan <plan> --decisions <json> --authorization <actual owner request reference>.

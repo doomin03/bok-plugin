@@ -166,6 +166,8 @@ Claude Code에서는 동일 문장에서 `$bok-...`를 `/bok-...`로 바꾸면 �
 
 ## 산출물과 승인 검사
 
+비교 HTML에서 차트별 의견을 입력하고 **적용·저장**을 누르면 유사도와 리뷰가 CSV에 자동 기록됩니다. **CSV 저장·연결**로 파일을 선택하면 지원 브라우저에서 같은 CSV를 갱신하고, 미지원 환경에서는 다운로드합니다. 다시 열 때 **CSV 불러오기**로 의견을 복원할 수 있습니다. 같은 브라우저의 적용 리뷰는 임시 복원되며, 파일 갱신은 CSV를 다시 연결해야 합니다. [버튼 기반 리뷰 저장 안내](plugins/bok-report-publisher/skills/bok-report-publishing/references/image-comparison.md#오너의-버튼-기반-리뷰-저장)
+
 각주·차트·표는 [각주 연결 및 반응형 검증 계약](plugins/bok-report-publisher/skills/bok-report-publishing/references/notes-and-responsive-verification.md)을 따릅니다. 본문의 각주 참조 위치와 문서 표시 번호를 확인하여 기존 각주 UI에 전문을 연결하고 실제 클릭 결과를 대조합니다. 모바일 375px, 태블릿 768px/1024px, PC 1440px와 기존 breakpoint 경계에서 좌우 Y축 단위·X축 눈금·계열·범례·표 스크롤을 검증합니다. 화면 증거가 없으면 pending이며 추출/빌드 성공만으로 통과하지 않습니다.
 
 원본 추출 schema 3은 각주 위치(`inlineParagraphs`, `noteLinks`), 미주 참조와 각주 문단·줄바꿈을 보존합니다. DOCX 내부 ID를 표시 번호로 쓰지 않습니다. 기존 schema 2 산출물은 같은 추출 명령을 다시 실행하면 별도 패키지로 생성되어 과거 증거를 보존합니다.

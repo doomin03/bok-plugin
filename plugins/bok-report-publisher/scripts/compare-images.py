@@ -1,6 +1,7 @@
 """Create offline image comparison evidence. Requires Pillow; never grants approval."""
 import argparse
 import base64
+import csv
 import hashlib
 import html
 import io
@@ -110,6 +111,12 @@ def generate(manifest, output, targets_file=None):
             md += ['', '미비교: 원본 또는 대상 이미지가 없습니다.']
         md += ['', '- 데이터 정확성: 미검증 (원본 셀·실제 차트 값 별도 대조)',
                '- 오너 수락: 미확인', '- 검토 의견 / 수정 필요 사항: 미작성', '']
+        index = len(records)
+        body += (f'<div class="review-editor"><label for="review-{index}">검토 의견</label>'
+                 f'<textarea id="review-{index}" rows="4" placeholder="예: 기존에는 차트가 1개였는데 이번 문서에서는 2개로 증가했습니다."></textarea>'
+                 f'<button type="button" data-review-action id="apply-review-{index}">적용·저장</button>'
+                 f'<span id="review-status-{index}" role="status">미작성</span></div>')
+        record['evidenceId'] = hashlib.sha256(json.dumps(record, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
         cards.append('<section>' + body + '</section>')
         reviews.append('\n'.join(md))
         records.append(record)
@@ -117,11 +124,31 @@ def generate(manifest, output, targets_file=None):
               '800×600에 중앙 배치합니다. 차이 픽셀은 RGB 중 한 채널이라도 오차가 16을 넘는 픽셀입니다. '
               '여백·글꼴·캡처 배율의 영향을 받으며 의미적 유사도, 데이터 정확성, 재사용 승인 점수가 아닙니다.')
     document = '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>차트·이미지 비교 리뷰</title><style>body{font:16px/1.6 system-ui;margin:24px auto;padding:0 16px;max-width:1200px;background:#f6f7f9;color:#202632}section{background:white;padding:20px;margin:24px 0;border:1px solid #ccd2db;border-radius:8px}img{max-width:100%;height:auto}figure{margin:0;min-width:0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}.overlay{position:relative;max-width:800px}.overlay img{display:block;width:100%}.over{position:absolute;inset:0;opacity:.5}p{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:600px){.pair{grid-template-columns:1fr}}</style><h1>차트·이미지 비교 리뷰</h1><p>' + escape(method) + '</p>' + ''.join(cards) + '</html>'
+    toolbar = ('<div class="review-toolbar"><button type="button" data-review-action id="save-review-csv">CSV 저장·연결</button> '
+               '<button type="button" data-review-action id="open-review-csv">CSV 불러오기</button>'
+               '<input id="review-csv-file" type="file" accept=".csv,text/csv" hidden>'
+               '<p id="review-message" role="status">리뷰 입력 후 항목별 적용·저장을 누르세요. 유사도는 자동 기입됩니다. '
+               'CSV 저장·연결을 먼저 하면 지원 브라우저에서 같은 파일을 갱신합니다. 다시 열 때 CSV 불러오기로 저장 내용을 복원할 수 있습니다.</p></div>')
+    style = '<style>.review-editor{margin-top:20px}.review-editor label{display:block;font-weight:600}textarea{display:block;box-sizing:border-box;width:100%;font:inherit;padding:10px;margin:8px 0}button{font:inherit;cursor:pointer;padding:8px 14px;margin:4px 8px 4px 0}button:disabled{cursor:wait}span[role=status]{font-size:14px}.review-toolbar{padding:16px;background:#e8eef8}</style>'
+    payload = {'items': records, 'key': hashlib.sha256(''.join(r['evidenceId'] for r in records).encode()).hexdigest()}
+    script = (Path(__file__).resolve().parent.parent / 'assets/comparison-review.mjs').read_text(encoding='utf-8').replace('export function ', 'function ')
+    # Escape HTML delimiters in JSON so source/review strings cannot close the script element.
+    encoded = json.dumps(payload, ensure_ascii=True).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+    document = document.replace('<h1>', style + toolbar + '<h1>', 1).replace('</html>', '<script>' + script + '\nmountReview(' + encoded + ');</script></html>')
     # An evidence run is immutable: use a new output folder for every revision.
     output.mkdir(parents=True, exist_ok=False)
     (output / 'comparison.html').write_text(document, encoding='utf-8')
     (output / 'review.md').write_text('# 차트별 비교 리뷰\n\n[이미지 비교 HTML](comparison.html)\n\n' + method + '\n\n' + '\n'.join(reviews), encoding='utf-8')
     (output / 'metrics.json').write_text(json.dumps({'method': method, 'items': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    with (output / 'comparison-review.csv').open('w', encoding='utf-8-sig', newline='') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['id', 'title', 'similarity_percent', 'changed_percent', 'status', 'evidence_id', 'target_source', 'analysis', 'review', 'updated_at'])
+        for record in records:
+            metrics = record['metrics'] or {}
+            values = [record['id'], record['title'], metrics.get('pixelSimilarityPercent', ''), metrics.get('changedPixelPercent', ''), record['status'], record['evidenceId'], record.get('comparisonTarget', {}).get('selectedSource', ''), record['analysis'], '', '']
+            # Match browser CSV representation (JS String(100.0) is '100').
+            values = [str(int(v)) if isinstance(v, float) and v.is_integer() else str(v) for v in values]
+            writer.writerow(["'" + v if v.startswith(('=', '+', '-', '@', '\t', '\r', '\n', "'")) else v for v in values])
     return records
 
 
