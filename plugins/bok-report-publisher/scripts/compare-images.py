@@ -112,7 +112,9 @@ def generate(manifest, output, targets_file=None):
         md += ['', '- 데이터 정확성: 미검증 (원본 셀·실제 차트 값 별도 대조)',
                '- 오너 수락: 미확인', '- 검토 의견 / 수정 필요 사항: 미작성', '']
         index = len(records)
-        body += (f'<div class="review-editor"><label for="review-{index}">검토 의견</label>'
+        verdict_btns = ''.join(f'<button type="button" class="verdict-btn" data-review-action id="verdict-{index}-{v}">{v}</button>' for v in ('동일함', '유사함', '다름', '보류'))
+        body += (f'<div class="review-editor"><div class="verdict" role="group" aria-label="오너 판정">판정: {verdict_btns}</div>'
+                 f'<label for="review-{index}">검토 의견</label>'
                  f'<textarea id="review-{index}" rows="4" placeholder="예: 기존에는 차트가 1개였는데 이번 문서에서는 2개로 증가했습니다."></textarea>'
                  f'<button type="button" data-review-action id="apply-review-{index}">적용·저장</button>'
                  f'<span id="review-status-{index}" role="status">미작성</span></div>')
@@ -129,7 +131,7 @@ def generate(manifest, output, targets_file=None):
                '<input id="review-csv-file" type="file" accept=".csv,text/csv" hidden>'
                '<p id="review-message" role="status">리뷰 입력 후 항목별 적용·저장을 누르세요. 유사도는 자동 기입됩니다. '
                'CSV 저장·연결을 먼저 하면 지원 브라우저에서 같은 파일을 갱신합니다. 다시 열 때 CSV 불러오기로 저장 내용을 복원할 수 있습니다.</p></div>')
-    style = '<style>.review-editor{margin-top:20px}.review-editor label{display:block;font-weight:600}textarea{display:block;box-sizing:border-box;width:100%;font:inherit;padding:10px;margin:8px 0}button{font:inherit;cursor:pointer;padding:8px 14px;margin:4px 8px 4px 0}button:disabled{cursor:wait}span[role=status]{font-size:14px}.review-toolbar{padding:16px;background:#e8eef8}</style>'
+    style = '<style>.review-editor{margin-top:20px}.review-editor label{display:block;font-weight:600}textarea{display:block;box-sizing:border-box;width:100%;font:inherit;padding:10px;margin:8px 0}button{font:inherit;cursor:pointer;padding:8px 14px;margin:4px 8px 4px 0}button:disabled{cursor:wait}span[role=status]{font-size:14px}.review-toolbar{padding:16px;background:#e8eef8}.verdict{margin:8px 0}.verdict-btn{border:1.5px solid #cbd5e1;background:#fff;border-radius:20px;padding:6px 16px;color:#475569}button.verdict-btn.sel[id$="동일함"]{background:#1a7f37;color:#fff;border-color:#1a7f37}button.verdict-btn.sel[id$="유사함"]{background:#2563eb;color:#fff;border-color:#2563eb}button.verdict-btn.sel[id$="다름"]{background:#dc2626;color:#fff;border-color:#dc2626}button.verdict-btn.sel[id$="보류"]{background:#a16207;color:#fff;border-color:#a16207}</style>'
     payload = {'items': records, 'key': hashlib.sha256(''.join(r['evidenceId'] for r in records).encode()).hexdigest()}
     script = (Path(__file__).resolve().parent.parent / 'assets/comparison-review.mjs').read_text(encoding='utf-8').replace('export function ', 'function ')
     # Escape HTML delimiters in JSON so source/review strings cannot close the script element.
@@ -142,10 +144,10 @@ def generate(manifest, output, targets_file=None):
     (output / 'metrics.json').write_text(json.dumps({'method': method, 'items': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     with (output / 'comparison-review.csv').open('w', encoding='utf-8-sig', newline='') as stream:
         writer = csv.writer(stream)
-        writer.writerow(['id', 'title', 'similarity_percent', 'changed_percent', 'status', 'evidence_id', 'target_source', 'analysis', 'review', 'updated_at'])
+        writer.writerow(['id', 'title', 'similarity_percent', 'changed_percent', 'status', 'evidence_id', 'target_source', 'analysis', 'verdict', 'review', 'updated_at'])
         for record in records:
             metrics = record['metrics'] or {}
-            values = [record['id'], record['title'], metrics.get('pixelSimilarityPercent', ''), metrics.get('changedPixelPercent', ''), record['status'], record['evidenceId'], record.get('comparisonTarget', {}).get('selectedSource', ''), record['analysis'], '', '']
+            values = [record['id'], record['title'], metrics.get('pixelSimilarityPercent', ''), metrics.get('changedPixelPercent', ''), record['status'], record['evidenceId'], record.get('comparisonTarget', {}).get('selectedSource', ''), record['analysis'], '', '', '']
             # Match browser CSV representation (JS String(100.0) is '100').
             values = [str(int(v)) if isinstance(v, float) and v.is_integer() else str(v) for v in values]
             writer.writerow(["'" + v if v.startswith(('=', '+', '-', '@', '\t', '\r', '\n', "'")) else v for v in values])

@@ -30,7 +30,7 @@ try {
   const download = await downloading;
   const csvPath = path.join(root, 'saved.csv'); await download.saveAs(csvPath);
   const rows = parseCsv(fs.readFileSync(csvPath, 'utf8'));
-  assert.equal(rows[1][2], '100'); assert.equal(rows[1][8], review);
+  assert.equal(rows[1][2], '100'); assert.equal(rows[1][8], ''); assert.equal(rows[1][9], review);
   assert.equal(rows[2][2], ''); assert.equal(rows[2][4], 'pending');
   await page.reload(); assert.equal(await page.locator('#review-0').inputValue(), review);
   await page.evaluate(() => localStorage.clear()); await page.reload();
