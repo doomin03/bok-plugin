@@ -12,8 +12,17 @@ export function bokReview({ repo, registry, enabled = false }) {
     },
     transformIndexHtml: {
       order: 'pre',
-      handler() {
-        return enabled ? [{ tag: 'script', attrs: { type: 'module' }, children: `import '${virtual}'`, injectTo: 'body' }] : [];
+      handler(html) {
+        if (!enabled) return html === undefined ? [] : html;
+        // The BOK CDN bootstrap scripts target the production DOM and conflict with
+        // the Vue review route (duplicate legacy charts and missing production nav nodes).
+        const reviewHtml = html
+          .replace(/\s*<script[^>]+src=["'][^"']*\/mcp-report\.js["'][^>]*><\/script>/gi, '')
+          .replace(/\s*<script[^>]+src=["'][^"']*\/mcp-report-charts\.js["'][^>]*><\/script>/gi, '');
+        return {
+          html: reviewHtml,
+          tags: [{ tag: 'script', attrs: { type: 'module' }, children: `import '${virtual}'`, injectTo: 'body' }],
+        };
       },
     },
     transform(code, id) {

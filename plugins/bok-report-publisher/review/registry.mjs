@@ -28,7 +28,18 @@ export function scan(repo) {
   const files = walk(path.join(repo, 'src/pages/report/components/toc')).filter(f => f.endsWith('.vue')).sort();
   const relative = f => path.relative(repo, f).replaceAll('\\', '/');
   const sources = new Map(files.map(f => [relative(f), fs.readFileSync(f, 'utf8')]));
-  const sections = files.filter(f => /[/\\]sections[/\\]Section[^/\\]+\.vue$/.test(f));
+  const importedVueTargets = sourceFile => {
+    const code = sources.get(sourceFile) || '';
+    return [...code.matchAll(/(?:from\s*|import\s*\(\s*)["']([^"']+\.vue)["']/g)]
+      .map(([, reference]) => reference.startsWith('@/')
+        ? 'src/' + reference.slice(2)
+        : relative(path.resolve(path.dirname(path.join(repo, sourceFile)), reference)))
+      .filter(target => sources.has(target));
+  };
+  const sections = files.filter(f =>
+    /[/\\]sections[/\\]Section[^/\\]+\.vue$/.test(f) ||
+    /[/\\]toc[/\\]report\d{6}[/\\](Overview|PolicyConditions|PolicyDirection|IssueAnalysis|Appendix)\.vue$/.test(f)
+  );
   for (const file of sections) {
     const key = relative(file);
     let section = registry.items.find(i => i.kind === 'section' && i.file === key);
@@ -38,11 +49,20 @@ export function scan(repo) {
     }
     section.active = true;
     section.title = path.basename(file, '.vue');
-    // Explicit import relationships, not visual order or economic figure-number guesses.
-    const imports = [...sources.get(key).matchAll(/(?:from\s*|import\s*\(\s*)["']([^"']+\/graph\/[^"']+\.vue)["']/g)];
-    for (const [, reference] of imports) {
-      const target = reference.startsWith('@/') ? 'src/' + reference.slice(2) : relative(path.resolve(path.dirname(file), reference));
-      if (!sources.has(target)) continue;
+    // Follow explicit Vue imports recursively so composite report sections remain reviewable.
+    const queue = [key];
+    const visited = new Set();
+    const chartTargets = new Set();
+    while (queue.length) {
+      const current = queue.shift();
+      if (visited.has(current)) continue;
+      visited.add(current);
+      for (const target of importedVueTargets(current)) {
+        if (target.includes('/graph/')) chartTargets.add(target);
+        else if (!visited.has(target)) queue.push(target);
+      }
+    }
+    for (const target of [...chartTargets].sort()) {
       let chart = registry.items.find(i => i.kind === 'chart' && i.file === target && i.sectionId === section.id);
       if (!chart) {
         chart = { id: section.id + '-C' + String(section.nextChart++).padStart(3, '0'), kind: 'chart', sectionId: section.id, file: target };

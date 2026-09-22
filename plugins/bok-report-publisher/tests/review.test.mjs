@@ -25,6 +25,25 @@ test('persistent IDs survive insertion and retirement; no recycled numbers', t =
   fs.unlinkSync(f.section);
   assert.equal(scan(f.repo).items.find(i => i.id === 'S001-C001').active, false);
 });
+test('report-period sections discover charts through nested Vue imports', t => {
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'bok-review-period-'));
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
+  const write = (relative, value) => {
+    const file = path.join(repo, relative);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, value);
+    return file;
+  };
+  write('src/pages/report/components/toc/report202609/Overview.vue', '<template><Composite /></template><script>import Composite from "./parts/Composite.vue";</script>');
+  write('src/pages/report/components/toc/report202609/parts/Composite.vue', '<template><Chart /></template><script>import Chart from "@/pages/report/components/toc/overview/graph/report202609/SHEET002Component.vue";</script>');
+  write('src/pages/report/components/toc/overview/graph/report202609/SHEET002Component.vue', '<template><div id="chart"></div></template>');
+  const registry = scan(repo);
+  const section = registry.items.find(item => item.active && item.file.endsWith('/report202609/Overview.vue'));
+  const chart = registry.items.find(item => item.active && item.sectionId === section.id && item.file.endsWith('/SHEET002Component.vue'));
+  assert.ok(section);
+  assert.ok(chart);
+  assert.deepEqual(registry.unmapped, []);
+});
 test('review transforms a Vue fragment and production plugin is entirely inactive', t => {
   const f = fixture(t), registry = scan(f.repo);
   const plugin = bokReview({ repo: f.repo, registry, enabled: true });
@@ -36,6 +55,15 @@ test('review transforms a Vue fragment and production plugin is entirely inactiv
   assert.equal(production.transform(f.component, f.chart), null);
   assert.deepEqual(production.transformIndexHtml.handler(), []);
   assert.equal(production.resolveId('virtual:bok-review'), undefined);
+});
+test('review HTML excludes production-only BOK bootstrap scripts', t => {
+  const f = fixture(t), registry = scan(f.repo);
+  const plugin = bokReview({ repo: f.repo, registry, enabled: true });
+  const html = '<script src="https://static-cdn.bok.or.kr/static/portal/js/mcp-report.js"></script><script type="module" src="https://static-cdn.bok.or.kr/static/portal/js/mcp-report-charts.js"></script><script src="/keep.js"></script>';
+  const result = plugin.transformIndexHtml.handler(html);
+  assert.doesNotMatch(result.html, /mcp-report(?:-charts)?\.js/);
+  assert.match(result.html, /keep\.js/);
+  assert.equal(result.tags.length, 1);
 });
 test('feedback preserves test conditions and creates independent OpenSpec changes', t => {
   const f = fixture(t); scan(f.repo);
