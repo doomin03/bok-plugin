@@ -25,7 +25,10 @@ export function scan(repo) {
   const location = path.join(repo, '.bok-review/registry.json');
   const registry = fs.existsSync(location) ? readJSON(location) : { version: 1, nextSection: 1, items: [] };
   registry.items.forEach(item => { item.active = false; });
-  const files = walk(path.join(repo, 'src/pages/report/components/toc')).filter(f => f.endsWith('.vue')).sort();
+  const files = [
+    ...walk(path.join(repo, 'src/pages/report/components/toc')),
+    ...walk(path.join(repo, 'src/pages/report202609')), // 월 전용 이관 트리도 스캔
+  ].filter(f => f.endsWith('.vue')).sort();
   const relative = f => path.relative(repo, f).replaceAll('\\', '/');
   const sources = new Map(files.map(f => [relative(f), fs.readFileSync(f, 'utf8')]));
   const importedVueTargets = sourceFile => {
@@ -38,7 +41,8 @@ export function scan(repo) {
   };
   const sections = files.filter(f =>
     /[/\\]sections[/\\]Section[^/\\]+\.vue$/.test(f) ||
-    /[/\\]toc[/\\]report\d{6}[/\\](Overview|PolicyConditions|PolicyDirection|IssueAnalysis|Appendix)\.vue$/.test(f)
+    /[/\\]toc[/\\]report\d{6}[/\\](Overview|PolicyConditions|PolicyDirection|IssueAnalysis|Appendix)\.vue$/.test(f) ||
+    /[/\\]report\d{6}[/\\]main[/\\](Overview|PolicyConditions|PolicyDirection|IssueAnalysis|Appendix)\.vue$/.test(f)
   );
   for (const file of sections) {
     const key = relative(file);
