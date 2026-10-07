@@ -6,7 +6,7 @@
   "source": {"document": "", "workbook": "", "sheet": "", "attribution": "", "headerRange": "", "dataRange": "", "referenceImage": ""},
   "period": {"frequency": "monthly", "start": "", "end": "", "timezone": "UTC"},
   "unit": "",
-  "series": [{"name": "", "sourceColumn": "", "outputKey": "", "chartType": "line", "axis": "left", "colour": "", "precision": 1, "nullPolicy": "preserve", "forecast": {"startsAt": "", "style": ""}}],
+  "series": [{"name": "", "sourceColumn": "", "outputKey": "", "chartType": "line", "mark": {"kind": "line", "symbol": "", "fill": "", "outline": "", "sourceEvidence": ""}, "axis": "left", "colour": "", "precision": 1, "nullPolicy": "preserve", "forecast": {"startsAt": "", "style": ""}}],
   "expectations": {"dataFile": "", "component": "", "containerId": "", "requiredLabels": []},
   "visualContract": {
     "status": "pending",
