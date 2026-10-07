@@ -27,7 +27,9 @@ export function scan(repo) {
   registry.items.forEach(item => { item.active = false; });
   const files = [
     ...walk(path.join(repo, 'src/pages/report/components/toc')),
-    ...walk(path.join(repo, 'src/pages/report202609')), // 월 전용 이관 트리도 스캔
+    // 회차 전용 이관 트리(src/pages/reportYYYYMM)를 모두 스캔한다
+    ...fs.readdirSync(path.join(repo, 'src/pages'), { withFileTypes: true })
+      .filter((d) => d.isDirectory() && /^report\d{6}$/.test(d.name)).flatMap((d) => walk(path.join(repo, 'src/pages', d.name))),
   ].filter(f => f.endsWith('.vue')).sort();
   const relative = f => path.relative(repo, f).replaceAll('\\', '/');
   const sources = new Map(files.map(f => [relative(f), fs.readFileSync(f, 'utf8')]));

@@ -329,7 +329,8 @@ def run(args):
     frozen = {}
     for folder in ("src/pages/lib", "src/assets/scss", "src/pages/report/components"):
         for file in (repo / folder).rglob("*"):
-            if file.is_file() and "report202609" not in file.parts:
+            # 회차 전용 트리(reportYYYYMM)는 작업 대상이라 동결하지 않는다
+            if file.is_file() and not any(re.fullmatch(r"report\d{6}", part) for part in file.parts):
                 frozen[file.relative_to(repo).as_posix()] = digest(file.read_bytes())
     save(change, "frozen-source.json", frozen)
     commit = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()

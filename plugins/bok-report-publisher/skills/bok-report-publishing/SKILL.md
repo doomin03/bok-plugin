@@ -39,7 +39,7 @@ Read [note mapping and responsive verification](references/notes-and-responsive-
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json --component path/to/GraphComponent.vue
 python scripts/catalog-source-data.py --workbook path/to/source.xlsx --sheet "Ⅰ-1"
-powershell -ExecutionPolicy Bypass -File scripts/verify-report.ps1 -Repo C:\workspace\vue-project\bok-vue-web -Mode report
+powershell -ExecutionPolicy Bypass -File scripts/verify-report.ps1 -Repo <repo> -Mode report
 ```
 
 The chart audit checks structural parity with the declared contract; it does not prove source-column meaning. After a visual change, inspect desktop and mobile and compare title, unit, series, axes, forecast style, date labels, values, caption and source note to the source package. Record feedback as figure ID, severity, source evidence, target location, observed result, expected result, and smallest corrective change.
