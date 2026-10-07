@@ -26,3 +26,18 @@ Use scripts/verify-fidelity.mjs with a reviewed inheritance contract when availa
 
 Start artifacts and reference images are private development evidence, never automatically copied into public assets or published. Review IDs/feedback controls must remain development-only.
 Statistical charts must be actual chart implementations. Never substitute an original figure image while claiming implementation or preview completion. Keep comparison images only in review evidence. Genuine source photos/diagrams are a distinct, explicitly classified content type.
+
+## Shared-change protocol (only when the owner asks for a common fix)
+
+Shared files stay frozen by default. When the owner explicitly asks for a fix "for all charts" (margins, text overflow, mobile markers,
+axis-title alignment), a shared change is allowed only under these rules:
+
+1. **Root cause once.** Grep every caller of the shared function and fix it where all callers route through; do not patch charts one by one.
+2. **Scope to the report.** Guard the behaviour with the report root (`[data-report="<YYYYMM>"]`) so previous reports render exactly as before.
+   One concern per file under `src/pages/lib/`, imported in one place, so it can be removed in one line.
+3. **No visible movement.** Post-render adjustments run in a microtask or before paint, without animation; measure redraw counts, not only screenshots.
+4. **Verify the whole report, not the request:** every chart of the report at 1440/1024/768/390/360 with the change on vs off
+   (moved elements in px, lost texts = 0), previous report unchanged, a font-substitution stress run (labels must not wrap or clip),
+   and every open or ready QA ticket re-checked for regressions.
+5. **Report the effect** per chart (what moved, by how much) and update repository-contract.md's hook list.
+   A shared change that was not requested by the owner is a fidelity violation, whatever it fixes.
