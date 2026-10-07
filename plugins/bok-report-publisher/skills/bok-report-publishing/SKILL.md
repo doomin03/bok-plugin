@@ -17,6 +17,8 @@ Before any implementation, read [mandatory fidelity contract](references/fidelit
 
 Identify the report DOCX, figure-data XLSX, target report surface, and target branch/commit. Source documents are managed under `<repo>/docs/<report>/` (one `.docx`, one `.xlsx`); bol-start reads that location by default. Create one open chart specification from `assets/chart-spec.template.json` for each figure. Record the source sheet, exact data/header range, unit, period, caption/source note, series mapping, forecast rule and expected target files. Never infer economic semantics from a screenshot.
 
+Read [source features](references/source-features.md): extract chart features from the DOCX vector figures, fill visualContract from them, verify the rendered charts against them, and turn every owner feedback into a checker rule or exception.
+
 Use `scripts/catalog-source-data.py` to review an XLSX sheet. Keep unavailable source values as `null`, never zero or an empty string.
 
 ## Implement

@@ -196,6 +196,39 @@ def workbook(path, root):
         return result
 
 
+def figure_features_for(docx):
+    """Features of every WMF/EMF figure in the DOCX (see extract-figure-features.py)."""
+    from figure_records import read_wmf, read_emf
+    from figure_features import extract
+    out = {}
+    with zipfile.ZipFile(docx) as z:
+        for name in sorted(n for n in z.namelist() if n.startswith("word/media/")):
+            ext = name.rsplit(".", 1)[-1].lower()
+            if ext not in ("wmf", "emf"):
+                out[name] = {"status": "raster-manual"}; continue
+            try:
+                records, window = (read_wmf if ext == "wmf" else read_emf)(z.read(name))
+                out[name] = {"status": "extracted", **extract(records, window or (0, 0, 1, 1))}
+            except Exception as exc:  # reported, never hidden
+                out[name] = {"status": "failed", "error": str(exc)}
+    return out
+
+
+def legend_matches(figures, series_names):
+    """Figures whose legend entries all appear among the sheet's series names, best first."""
+    key = lambda s: re.sub(r"[\s()（）·,\d)%.\-~/]", "", str(s))
+    names = key(" ".join(series_names))
+    scored = []
+    for name, f in figures.items():
+        legend = [key(l["text"]) for p in f.get("panels", []) for l in p["legend"] if l.get("mark")]
+        legend = [x for x in legend if len(x) >= 2]
+        if names and legend:
+            score = sum(x in names for x in legend) / len(legend)
+            if score >= 0.6:
+                scored.append({"media": name, "score": round(score, 2)})
+    return sorted(scored, key=lambda c: -c["score"])
+
+
 def run(args):
     repo = Path(args.repo).resolve()
     if not (repo / "src").is_dir():
@@ -223,6 +256,10 @@ def run(args):
     evidence = change / "sources"
     doc, toc = document(args.docx, evidence, args.toc_table)
     wb = workbook(args.xlsx, evidence)
+    # Read chart features from the vector figures (axes, ticks, legend marks, bands, lines, notes).
+    # Evidence for visualContract and figure mapping; it never marks a chart verified.
+    figures = figure_features_for(args.docx)
+    save(change, "figure-features.json", figures)
     items = []
     for entry in toc:
         items.append({"id": entry["id"], "kind": "section", "title": " | ".join(entry["cells"]),
@@ -257,10 +294,15 @@ def run(args):
                            and normalized("그림"+figure_id+".") in normalized(b["text"])]
         media_candidates = sorted({r["target"] for b in body_candidates for r in b["references"]
                                    if not r["external"] and "/media/" in r["target"]})
+        series_names = [str(v) for k, v in sorted(cellmap.items()) if re.fullmatch(r"[B-Z]{1,2}7", k) and v]
+        legend_candidates = legend_matches(figures, series_names)
         contract = {"id": sheet["id"], "sheet": sheet["name"], "title": title,
                     "figureCandidate": figure_id, "sectionCandidates": section_candidates,
                     "documentBlockCandidates": [b["id"] for b in body_candidates],
                     "referenceImageCandidates": media_candidates,
+                    "seriesNames": series_names,
+                    # Legend text of a vector figure contained in the sheet's series names (row 7).
+                    "legendMatchCandidates": legend_candidates,
                     "source": "sources/"+sheet["file"],
                     "headers": {k: cellmap.get(k) for k in ("A1","A2","A4","A5","A7","A8")},
                     "sourceRanges": [], "series": [], "axisUnits": [], "donor": None,
