@@ -9,7 +9,7 @@ Turn an approved BOK report source package into a traceable web implementation. 
 
 ## Start a figure
 
-Canonical workflow: bok-start creates an owner comparison review; bok-spec applies the owner's decisions; bok-implement selects scope; bok-chart builds; bok-verify verifies; bok-feedback records corrections. Read references/owner-workflow.md. No owner approval means no implementation. A direct user approval of a concrete proposed chart strategy may be recorded, but never invent approval from silence.
+Canonical workflow: bok-start creates an owner comparison review; bok-spec applies the owner's decisions; bok-implement selects scope; bok-chart builds; bok-verify verifies; bok-land lands agent work into feature then develop; bok-feedback records corrections. Design-QA Jira tickets go through bok-qa. Read references/owner-workflow.md. No owner approval means no implementation. A direct user approval of a concrete proposed chart strategy may be recorded, but never invent approval from silence.
 
 Owner-configured donor projects come from docs/comparison-targets.json or report-specific docs/<report>/comparison-targets.json, with an explicitly supplied configuration path taking precedence. Read references/image-comparison.md for required projectPath, description and sourcePaths, candidate mapping and comparison artifacts. Never infer a donor project from the current checkout alone.
 
