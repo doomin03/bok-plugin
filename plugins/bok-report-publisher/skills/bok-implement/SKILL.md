@@ -8,7 +8,7 @@ For selected-unit regression tests use ../bok-test/SKILL.md, preserving existing
 
 Before implementation read references/owner-workflow.md under bok-report-publishing and run workflow.mjs gate for selected units. If absent, route through bok-start and bok-spec; do not approve your own proposal. Use ../bok-chart/SKILL.md for the reuse/new decision and implementation, and ../bok-verify/SKILL.md for checks. Do not run retired bulk site generators. Both strategies produce actual charts, never source-image fallbacks.
 
-Read ../bok-report-publishing/SKILL.md and its references/fidelity-contract.md and references/ticket-workflow.md.
+Read ../bok-report-publishing/SKILL.md and its references/fidelity-contract.md, references/report-rules.md and references/ticket-workflow.md. Sync the work tree with origin/feature before each request.
 Read and follow references/notes-and-responsive-verification.md under bok-report-publishing. For selected body/notes units, map the exact document markers to the existing site's note trigger/data/UI and preserve the complete note text; chart footers are not body-note popups. For tables preserve source merges/headers and inherited scrolling. Run actual click/content tests and mobile/tablet/PC checks before reporting implementation verified.
 Require explicit ticket selection or explicit local scope. No scope means ask, not implement the report. Only a user explicitly requesting the entire report authorizes all units; show the unit list first.
 Resolve scripts in ../bok-report-publishing/scripts when installed, otherwise ../../scripts.

@@ -4,7 +4,7 @@ description: Build one selected BOK Highcharts chart using approved previous-rep
 ---
 
 # Implement one approved chart
-Read ../bok-report-publishing/references/fidelity-contract.md and [monetary policy patterns](references/monetary-policy-patterns.md).
+Read ../bok-report-publishing/references/fidelity-contract.md, sections 2-4 of ../bok-report-publishing/references/report-rules.md and [monetary policy patterns](references/monetary-policy-patterns.md).
 Run the workflow gate for the exact selected unit. Read its owner decision, source cells, comparison and OpenSpec.
 For reuse: git show the recorded commit/path, copy to the new report, retain wrapper/defaults/legend/axis-title positioning/responsive rules; change source-backed internals only. Record all differences.
 For new: record why candidates do not fit, compose a new focused Vue component from existing Highcharts defaults and chartDraw helpers where needed. Lack of an exact donor is not a ban on new charts. Do not create a new design system.

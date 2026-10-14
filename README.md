@@ -28,20 +28,20 @@ Claude Code는 `/bok-start`, Codex는 `$bok-start`처럼 스킬을 지정합니�
 PowerShell에서 플러그인 저장소로 이동한 뒤 실행합니다.
 
 ```powershell
-Set-Location C:/workspace/AI-project/bok-plugin
-powershell -ExecutionPolicy Bypass -File ./plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web
+Set-Location <plugin>
+powershell -ExecutionPolicy Bypass -File ./plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project <repo>
 ```
 
 ### Claude Code만 설치
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:/workspace/AI-project/bok-plugin/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web -Agent Claude
+powershell -ExecutionPolicy Bypass -File <plugin>/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project <repo> -Agent Claude
 ```
 
 ### Codex만 설치
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:/workspace/AI-project/bok-plugin/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project C:/workspace/vue-project/bok-vue-web -Agent Codex
+powershell -ExecutionPolicy Bypass -File <plugin>/plugins/bok-report-publisher/scripts/install-project-skills.ps1 -Project <repo> -Agent Codex
 ```
 
 `-Agent Both`는 생략 시 기본값입니다. 다른 프로젝트에 설치할 때는 `-Project`만 실제 경로로 바꿉니다.
@@ -56,8 +56,8 @@ powershell -ExecutionPolicy Bypass -File C:/workspace/AI-project/bok-plugin/plug
 설치기는 대상의 `AGENTS.md`와 `CLAUDE.md`에 관리용 안내 블록을 없을 때 추가합니다. 기존 내용은 보존합니다. 이 설치는 별도 AI 프로세스나 자동 실행 에이전트를 만드는 것이 아니라, 해당 도구가 읽는 스킬과 보조 스크립트를 배치하는 작업입니다.
 
 ```powershell
-Test-Path C:/workspace/vue-project/bok-vue-web/.claude/skills/bok-start/SKILL.md
-Test-Path C:/workspace/vue-project/bok-vue-web/.agents/skills/bok-start/SKILL.md
+Test-Path <repo>/.claude/skills/bok-start/SKILL.md
+Test-Path <repo>/.agents/skills/bok-start/SKILL.md
 ```
 
 선택한 에이전트의 경로가 `True`인지 확인한 다음, **플러그인 저장소가 아니라 Vue 프로젝트를 열어** 새 대화를 시작합니다. Codex에서는 설치된 스킬을 선택하거나 `$bok-start`로 지정합니다. Claude Code에서는 `/bok-start`를 입력합니다. 명령이 안 보이면 프로젝트 경로와 설치 위치를 확인하고 새 세션/앱 재시작 후 다시 확인하세요.
@@ -134,10 +134,10 @@ Codex에서는 각 첫 명령의 `/`를 `$`로 바꿉니다. 역순 범위는 �
 ```text
 $bok-start
 보고서: 2026-09
-DOCX: C:/Users/jung3/Downloads/O_1. 2026년 9월 통화신용정책보고서.docx
-XLSX: C:/Users/jung3/Downloads/O_3. 그림 원본 데이터.xlsx
-대상: C:/workspace/vue-project/bok-vue-web
-비교 대상 설정: C:/workspace/vue-project/bok-vue-web/docs/comparison-targets.json
+DOCX: <Downloads>/O_1. 2026년 9월 통화신용정책보고서.docx
+XLSX: <Downloads>/O_3. 그림 원본 데이터.xlsx
+대상: <repo>
+비교 대상 설정: <repo>/docs/comparison-targets.json
 구현하지 말고 원본과 지정된 기개발 소스의 차트별 비교 리뷰를 만들어줘.
 ```
 
@@ -205,15 +205,15 @@ Claude Code에서는 동일 문장에서 `$bok-...`를 `/bok-...`로 바꾸면 �
 다음은 **터미널용 명령**이며 플러그인 저장소에서 실행합니다. `dev`는 개발 서버를 실행하고, `build`는 파일만 생성합니다.
 
 ```powershell
-Set-Location C:/workspace/AI-project/bok-plugin
-node plugins/bok-report-publisher/scripts/review.mjs dev --repo C:/workspace/vue-project/bok-vue-web
+Set-Location <plugin>
+node plugins/bok-report-publisher/scripts/review.mjs dev --repo <repo>
 ```
 
 검수 빌드와 번호 확인:
 
 ```powershell
-node plugins/bok-report-publisher/scripts/review.mjs build --repo C:/workspace/vue-project/bok-vue-web
-node plugins/bok-report-publisher/scripts/review.mjs list --repo C:/workspace/vue-project/bok-vue-web
+node plugins/bok-report-publisher/scripts/review.mjs build --repo <repo>
+node plugins/bok-report-publisher/scripts/review.mjs list --repo <repo>
 ```
 
 검수 빌드는 `dist-review`에 생성됩니다. 화면의 섹션·차트 ID는 원문 그림 번호와 별개이며 `.bok-review/registry.json`으로 유지됩니다. 일반 생산 빌드에는 검수 버튼이 없습니다.
@@ -229,7 +229,7 @@ node plugins/bok-report-publisher/scripts/review.mjs list --repo C:/workspace/vu
 화면에서 다운로드한 피드백 JSON을 OpenSpec으로 가져오는 터미널 명령:
 
 ```powershell
-node plugins/bok-report-publisher/scripts/review.mjs feedback --repo C:/workspace/vue-project/bok-vue-web --input C:/Users/jung3/Downloads/<검수ID>-feedback.json
+node plugins/bok-report-publisher/scripts/review.mjs feedback --repo <repo> --input <Downloads>/<검수ID>-feedback.json
 ```
 
 `S039-C001` 같은 검수 ID, `그림 I-1` 같은 원문 번호, `BOK-123` 같은 Jira 키는 서로 다른 식별자입니다. 현재 등록부를 확인해 연결해야 하며 번호를 추측하지 않습니다.

@@ -5,7 +5,7 @@ description: Land finished BOK report work from an agent worktree branch into fe
 
 # Land agent work: agent/* → feature → develop
 
-Landing is part of the job, not a hand-off. Do not wait for another session to commit; do not leave verified work unlanded.
+Read section 6 of ../bok-report-publishing/references/report-rules.md. Landing is part of the job, not a hand-off. Do not wait for another session to commit; do not leave verified work unlanded.
 
 1. **Audit first.** List every worktree's uncommitted changes (`git worktree list` + `git status --porcelain`).
    For each change decide, with evidence, one of: commit and land / already in develop (compare blob hashes with `origin/develop`) /
