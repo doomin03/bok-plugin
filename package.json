@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test plugins/bok-report-publisher/tests/*.test.mjs && python plugins/bok-report-publisher/scripts/test_figure_features.py && python plugins/bok-report-publisher/scripts/test_start_report.py",
+    "test": "node --test plugins/bok-report-publisher/tests/*.test.mjs && python plugins/bok-report-publisher/scripts/check_figure_features.py && python plugins/bok-report-publisher/scripts/check_start_report.py && python -m unittest discover -s plugins/bok-report-publisher/tests -q",
     "review:init": "node plugins/bok-report-publisher/scripts/review.mjs init",
     "review:dev": "node plugins/bok-report-publisher/scripts/review.mjs dev",
     "review:build": "node plugins/bok-report-publisher/scripts/review.mjs build",

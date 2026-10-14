@@ -200,10 +200,14 @@ def figure_features_for(docx):
     """Features of every WMF/EMF figure in the DOCX (see extract-figure-features.py)."""
     from figure_records import read_wmf, read_emf
     from figure_features import extract
-    out = {}
+    out, seen = {}, {}
     with zipfile.ZipFile(docx) as z:
         for name in sorted(n for n in z.namelist() if n.startswith("word/media/")):
             ext = name.rsplit(".", 1)[-1].lower()
+            key = digest(z.read(name))  # 바이트가 같은 그림은 첫 그림을 가리킨다
+            if key in seen:
+                out[name] = {"status": "duplicate", "of": seen[key]}; continue
+            seen[key] = name
             if ext not in ("wmf", "emf"):
                 out[name] = {"status": "raster-manual"}; continue
             try:
@@ -212,6 +216,9 @@ def figure_features_for(docx):
             except Exception as exc:  # reported, never hidden
                 out[name] = {"status": "failed", "error": str(exc)}
     return out
+
+
+from figure_link import caption_links, link, summary, visual_contract  # noqa: E402
 
 
 def legend_matches(figures, series_names):
@@ -296,6 +303,10 @@ def run(args):
                                    if not r["external"] and "/media/" in r["target"]})
         series_names = [str(v) for k, v in sorted(cellmap.items()) if re.fullmatch(r"[B-Z]{1,2}7", k) and v]
         legend_candidates = legend_matches(figures, series_names)
+        # 그림 자리 맞추기용 숫자: 8행(단위) 아래, A열(날짜) 오른쪽
+        numbers = [float(c["value"]) for c in cells if c["type"] == "n" and c["value"] not in (None, "")
+                   and re.fullmatch(r"([A-Z]+)(\d+)", c["ref"]) and int(re.fullmatch(r"[A-Z]+(\d+)", c["ref"]).group(1)) >= 9
+                   and not c["ref"].startswith("A")]
         contract = {"id": sheet["id"], "sheet": sheet["name"], "title": title,
                     "figureCandidate": figure_id, "sectionCandidates": section_candidates,
                     "documentBlockCandidates": [b["id"] for b in body_candidates],
@@ -312,11 +323,22 @@ def run(args):
                                    "Inspect original figure and mobile/tablet/desktop output",
                                    "Verify both Y-axis units, X ticks, all series and legend against source",
                                    "Verify body note clicks show exact source note text"]}
-        contracts.append(contract)
-        save(change, "charts/"+sheet["id"]+".json", contract)
+        contracts.append((contract, numbers))
         for section in sections:
             if section["id"] in section_candidates:
                 section["charts"].append(sheet["id"])
+    # 그림 연결(캡션 순서·범례·데이터 범위)과 원본 그림 특징에서 뽑은 visualContract 초안. 오너 리뷰 전에는 확정이 아니다
+    captions = caption_links(doc["blocks"], [c for c, _ in contracts])
+    for contract, numbers in contracts:
+        contract["figureLink"] = link(contract, figures, captions, numbers)
+        media = contract["figureLink"]["media"]
+        figure = figures.get(media) if media else None
+        figure = figures.get(figure["of"]) if figure and figure.get("status") == "duplicate" else figure
+        if figure and figure.get("status") == "extracted":
+            contract["visualContract"] = visual_contract(figure, media)
+            contract["featureSummary"] = summary(contract)
+        save(change, "charts/"+contract["id"]+".json", contract)
+    contracts = [c for c, _ in contracts]
     save(change, "section-plan.json", sections)
     save(change, "chart-plan.json", contracts)
     for section in sections:

@@ -19,8 +19,9 @@ const accept = (chart, checks) => checks.map((c) => {
 });
 
 async function browser() {
-  try { const { chromium } = await import('playwright'); return { b: await chromium.launch(), pw: true }; }
-  catch { const p = (await import('puppeteer-core')).default; return { b: await p.launch({ executablePath: arg('--chrome', process.env.CHROME_PATH), headless: true }), pw: false }; }
+  const executablePath = arg('--chrome', process.env.CHROME_PATH);
+  try { const { chromium } = await import('playwright'); return { b: await chromium.launch(executablePath ? { executablePath } : {}), pw: true }; }
+  catch { const p = (await import('puppeteer-core')).default; return { b: await p.launch({ executablePath, headless: true }), pw: false }; }
 }
 
 const { b, pw } = await browser(), results = [];
@@ -43,8 +44,13 @@ for (const width of arg('--widths', '1440,390').split(',').map(Number)) {
       const ticks = new Set(panel.yAxes.flatMap((a) => a.ticks.map(String)));
       const score = (r) => r ? 0.6 * r.legend.filter((l) => want.has(norm(l.text))).length / Math.max(want.size, 1)
         + 0.4 * r.yAxes.flatMap((a) => a.ticks.map(String)).filter((t) => ticks.has(t)).length / Math.max(ticks.size, 1) : 0;
-      const best = ids.map((i) => ({ i, s: score(runtime[i]) })).sort((x, y) => y.s - x.s)[0];
-      cand.push({ figure, k, panel, id: want.size && best && best.s >= 0.6 ? best.i : null, score: best?.s ?? 0 });
+      // 범례가 없는 그림(계열 하나·플롯 안 글자 범례)은 눈금 50% + x축 라벨 50% 로 찾고 기준을 높인다
+      const xs = new Set(panel.xLabels.map((l) => norm(l.text)));
+      const plain = (r) => r ? 0.5 * r.yAxes.flatMap((a) => a.ticks.map(String)).filter((t) => ticks.has(t)).length / Math.max(ticks.size, 1)
+        + 0.5 * r.xLabels.filter((l) => xs.has(norm(l))).length / Math.max(xs.size, 1) : 0;
+      const rank = want.size ? score : plain, cut = want.size ? 0.6 : 0.75;
+      const best = ids.map((i) => ({ i, s: rank(runtime[i]) })).sort((x, y) => y.s - x.s)[0];
+      cand.push({ figure, k, panel, id: best && best.s >= cut ? best.i : null, score: best?.s ?? 0 });
     });
   }
   // 차트 하나에는 점수가 가장 높은 그림 패널 하나만 연결한다(개요·본문 중복 그림은 남는 쪽이 unmapped)
@@ -55,12 +61,15 @@ for (const width of arg('--widths', '1440,390').split(',').map(Number)) {
     const checks = accept(c.id, compareFigure(c.panel, runtime[c.id]));
     results.push({ figure: c.figure, panel: c.k, width, chart: c.id, score: +c.score.toFixed(2), status: checks.some((x) => x.status === 'fail') ? 'fail' : 'pass', checks });
   }
+  // 반대 방향 누락: 원본 그림과 연결되지 않은 구현 차트도 결과에 남긴다(대조 0건 = 통과가 아님)
+  for (const id of ids) if (!taken.has(id) && !results.some((r) => r.width === width && r.chart === id))
+    results.push({ figure: null, panel: 0, width, chart: id, checks: [], status: 'no-source' });
   await page.close();
 }
 await b.close();
 fs.writeFileSync(path.join(out, 'figure-check.json'), JSON.stringify(results, null, 1));
 const lines = ['# 원본 그림 특징 대조', '', '| 그림 | 패널 | 폭 | 차트 | 결과 | 실패 항목 |', '|---|---|---|---|---|---|'];
-for (const r of results) lines.push(`| ${r.figure} | ${r.panel + 1} | ${r.width} | ${r.chart ?? '-'} | ${r.status} | ${r.checks.filter((c) => c.status === 'fail').map((c) => c.feature).join('; ')} |`);
+for (const r of results) lines.push(`| ${r.figure ?? '-'} | ${r.panel + 1} | ${r.width} | ${r.chart ?? '-'} | ${r.status} | ${r.checks.filter((c) => c.status === 'fail').map((c) => c.feature).join('; ')} |`);
 fs.writeFileSync(path.join(out, 'figure-check.md'), lines.join('\n') + '\n');
 const count = (s) => results.filter((r) => r.status === s).length;
-console.log(JSON.stringify({ pass: count('pass'), fail: count('fail'), unmapped: count('unmapped') }));
+console.log(JSON.stringify({ pass: count('pass'), fail: count('fail'), unmapped: count('unmapped'), noSource: count('no-source') }));

@@ -57,6 +57,7 @@ def _store(canvas, obj):
 def read_wmf(data):
     """Return (records, window) from a WMF byte string (placeable header optional)."""
     c, i = Canvas(), (22 if data[:4] == b'\xd7\xcd\xc6\x9a' else 0)
+    lead = None
     i += struct.unpack_from('<H', data, i + 2)[0] * 2  # header size in words
     while i + 6 <= len(data):
         size, fn = struct.unpack_from('<IH', data, i)
@@ -72,7 +73,8 @@ def read_wmf(data):
         elif fn == 0x02FB:
             height, _, _, _, weight, _, _, _, charset = h('<hhhhhBBBB')
             face = data[p + 18:p + 50].split(b'\0')[0]
-            _store(c, {'kind': 'font', 'size': abs(height), 'weight': weight, 'charset': charset, 'face': decode(face, charset)})
+            _store(c, {'kind': 'font', 'size': abs(height), 'weight': weight, 'charset': charset, 'face': decode(face, charset),
+                       'vertical': face.startswith(b'@')})
         elif fn in (0x00F7, 0x0142, 0x01F9, 0x06FF):
             _store(c, {'kind': 'other'})
         elif fn == 0x012D:
@@ -89,7 +91,13 @@ def read_wmf(data):
             y, x, n, opts = h('<hhhH'); off = 8 + (8 if opts & 0x0006 else 0)
             dx = off + n + (n & 1)  # per-character advances follow the padded string
             width = sum(h('<%dh' % n, dx)) if n and 6 + dx + 2 * n <= size * 2 else None
-            c.text(x, y, decode(data[p + off:p + off + n], (c.font or {}).get('charset', 129)), width)
+            raw, charset = data[p + off:p + off + n], (c.font or {}).get('charset', 129)
+            # 세로쓰기 글꼴(@HY중고딕)은 한글 한 글자를 1바이트씩 두 레코드로 나눠 쓴다: 앞 바이트를 붙여 읽는다
+            if lead:
+                raw, (x, y), lead = lead[0] + raw, lead[1], None
+            elif n == 1 and 0x81 <= raw[0] <= 0xFE and charset in (0, 129):
+                lead = (raw, (x, y)); i += size * 2; continue
+            c.text(x, y, decode(raw, charset), width)
         elif fn == 0x0521:
             n = h('<h')[0]; y, x = h('<hh', 2 + n + (n & 1))
             c.text(x, y, decode(data[p + 2:p + 2 + n], (c.font or {}).get('charset', 129)))

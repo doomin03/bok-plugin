@@ -24,6 +24,8 @@ function checkPlan(plan){
   if(!u.title||!u.files?.length||!u.sourceRefs?.length||!u.acceptance?.length)throw Error('Incomplete unit');
  }
 }
+const features=u=>u.kind!=='chart'?'':'원본 그림 특징 ('+(u.figureLink?u.figureLink.status+' '+(u.figureLink.media||'그림 미확정'):'그림 연결 없음')+'):\n\n'
+ +(u.featureSummary.length?u.featureSummary.map(l=>'- '+l).join('\n'):'- 미추출: 그림을 보고 축·범례·표시·음영·기준선·플롯 글자를 기록할 것')+'\n\n';
 export function prepare(repo,plan,{revise=false}={}){
  checkPlan(plan);const dir=directory(repo,plan.report),file=path.join(dir,'review.json');
  // Re-running start must never erase owner edits or prior approval.
@@ -38,10 +40,12 @@ export function prepare(repo,plan,{revise=false}={}){
   slug:u.slug,title:u.title,unitHash:hash(u),kind:u.kind,sourceRefs:u.sourceRefs,
   proposed:u.strategy||'undecided',baseline:u.baseline||null,comparison:u.comparison||'Not compared',
   similarity:u.similarity||'AI 유사성 판단 미기록 (bok-start가 채워야 함)',
-  questions:u.questions||[],decision:'pending',ownerComment:'',acceptance:u.acceptance
+  questions:u.questions||[],decision:'pending',ownerComment:'',acceptance:u.acceptance,
+  // 원본 그림 특징(bok-start 의 charts/<SHEET>.json): 오너가 유사도를 판정하기 전에 먼저 본다
+  figureLink:u.figureLink?{status:u.figureLink.status,media:u.figureLink.media}:null,featureSummary:u.featureSummary||[]
  }))};
  write(file,draft);
- fs.writeFileSync(path.join(dir,'owner-review.md'),'# 오너 비교 리뷰\n\n아직 구현 승인이 아닙니다. AI가 먼저 각 단위의 유사성을 판단해 아래 "AI 유사성 판단"과 "AI 제안"에 기록했습니다. 그림별 원본 비교 이미지, 이전 분기 소스/커밋, 계열·축·단위 차이와 함께 이를 검토한 뒤 "오너 결정"(reuse / new / hold)과 "오너 의견"을 직접 작성하세요. 원본 이미지는 개발 증거이며 사이트에 표시하지 않습니다.\n\n'+draft.units.map(u=>'## '+u.slug+' — '+u.title+'\n\nAI 제안: '+u.proposed+'\n\nAI 유사성 판단: '+u.similarity+'\n\n비교: '+u.comparison+'\n\n근거: '+u.sourceRefs.join(', ')+'\n\n질문: '+u.questions.join('; ')+'\n\n오너 결정: 미작성\n\n오너 의견: \n').join('\n'));
+ fs.writeFileSync(path.join(dir,'owner-review.md'),'# 오너 비교 리뷰\n\n아직 구현 승인이 아닙니다. AI가 먼저 각 단위의 유사성을 판단해 아래 "AI 유사성 판단"과 "AI 제안"에 기록했습니다. 그림별 원본 비교 이미지, 이전 분기 소스/커밋, 계열·축·단위 차이와 함께 이를 검토한 뒤 "오너 결정"(reuse / new / hold)과 "오너 의견"을 직접 작성하세요. 원본 이미지는 개발 증거이며 사이트에 표시하지 않습니다.\n\n'+draft.units.map(u=>'## '+u.slug+' — '+u.title+'\n\n'+features(u)+'AI 제안: '+u.proposed+'\n\nAI 유사성 판단: '+u.similarity+'\n\n비교: '+u.comparison+'\n\n근거: '+u.sourceRefs.join(', ')+'\n\n질문: '+u.questions.join('; ')+'\n\n오너 결정: 미작성\n\n오너 의견: \n').join('\n'));
  return draft;
 }
 export function applyReview(repo,plan,decisions,authorization){
@@ -61,11 +65,13 @@ export function applyReview(repo,plan,decisions,authorization){
   if(!['reuse','new','hold'].includes(d.decision)||!d.comment?.trim())throw Error('Decision and owner comment required');
   if(d.decision!=='hold'){
    if(u.kind==='chart'&&(!u.baseline?.commit||!u.baseline?.files?.length||!u.comparison||!u.sourceEvidence?.length))throw Error('Chart comparison, baseline and source evidence required');
+   // 특징 먼저, 유사도 판정은 그다음: 원본 그림 특징 없이 재사용·신규를 정하지 않는다
+   if(u.kind==='chart'&&!u.featureSummary?.length)throw Error('Source figure features required before an owner decision (bok-start featureSummary)');
    if(u.questions?.length)throw Error('Resolve outstanding questions in plan, then request review again');
   }
   const evidence={};
   for(const file of u.sourceEvidence||[]){const p=safe(repo,file);evidence[file]=createHash('sha256').update(fs.readFileSync(p)).digest('hex');}
-  current.units[d.slug]={unitHash:hash(u),decision:d.decision,owner:decisions.owner,comment:d.comment,authorization,acceptance:u.acceptance,evidence,baseline:u.baseline||null};
+  current.units[d.slug]={unitHash:hash(u),decision:d.decision,owner:decisions.owner,comment:d.comment,authorization,acceptance:u.acceptance,evidence,baseline:u.baseline||null,featureSummary:u.featureSummary||[]};
  }
  const revision=hash(current),revDir=path.join(dir,'revisions',revision);
  if(fs.existsSync(path.join(revDir,'decisions.json'))){
@@ -79,7 +85,8 @@ export function applyReview(repo,plan,decisions,authorization){
  if(!fs.existsSync(path.join(revDir,'tasks.md')))fs.writeFileSync(path.join(revDir,'tasks.md'),'# Reviewed scope\n\n'+approved.map(([s])=>'- [ ] Implement and verify only when selected: '+s).join('\n')+'\n');
  fs.writeFileSync(path.join(revDir,'proposal.md'),'# Owner-reviewed report units\n\nImplement only an explicitly selected approved unit. Jira registration remains a separate command.\n');
  fs.writeFileSync(path.join(revDir,'design.md'),'# Design decisions\n\n'+Object.entries(current.units).map(([s,d])=>'## '+s+'\n\nStrategy: '+d.decision+'\n\nOwner: '+d.owner+'\n\n'+d.comment+'\n\n'+JSON.stringify(d.baseline)).join('\n\n'));
- fs.writeFileSync(path.join(revDir,'specs/owner-decisions/spec.md'),'# Owner decisions\n\n## ADDED Requirements\n\n'+approved.map(([s,d])=>'### Requirement: '+s+'\nThe implementation SHALL use the approved '+d.decision+' strategy and preserve established UI.\n\n'+d.acceptance.map((a,i)=>'#### Scenario: '+s+'-'+i+'\n- **WHEN** the selected chart is verified\n- **THEN** '+a).join('\n\n')).join('\n\n'));
+ fs.writeFileSync(path.join(revDir,'specs/owner-decisions/spec.md'),'# Owner decisions\n\n## ADDED Requirements\n\n'+approved.map(([s,d])=>'### Requirement: '+s+'\nThe implementation SHALL use the approved '+d.decision+' strategy and preserve established UI.\n\n'+d.acceptance.map((a,i)=>'#### Scenario: '+s+'-'+i+'\n- **WHEN** the selected chart is verified\n- **THEN** '+a).join('\n\n')
+  +(d.featureSummary?.length?'\n\n#### Scenario: '+s+'-source-features\n- **WHEN** the chart is rendered at 1440 and 390\n- **THEN** verify-figure-features.mjs finds these source features, or each difference is an owner exception:\n'+d.featureSummary.map(l=>'  - '+l).join('\n'):'')).join('\n\n'));
  write(currentFile,{...current,revision});return {revision,approved:approved.map(([s])=>s)};
 }
 export function requireApproved(repo,plan,slugs){

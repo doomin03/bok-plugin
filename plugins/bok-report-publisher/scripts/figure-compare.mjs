@@ -1,7 +1,7 @@
 // Compare source-figure features (figure_features.py) with runtime features (figure-runtime.mjs).
 // Each check is pass / fail / review with both values, so a reviewer sees the exact difference.
 // 각주 번호(2))·띄어쓰기·괄호·HTML 차이는 같은 글자로 본다
-const norm = (s) => String(s ?? '').replace(/<[^>]+>/g, '').replace(/\d+\)/g, '').replace(/[\s()（）·,]/g, '').toLowerCase();
+const norm = (s) => String(s ?? '').replace(/<[^>]+>/g, '').replace(/[−–]/g, '-').replace(/\d+\)/g, '').replace(/[\s()（）·,]/g, '').toLowerCase();
 // x축 라벨은 연도 생략 표기(23.7 ↔ 7)를 같은 것으로 본다
 const ROMAN = { 'ⅰ': 'i', 'ⅱ': 'ii', 'ⅲ': 'iii', 'ⅳ': 'iv', 'Ⅰ': 'i', 'Ⅱ': 'ii', 'Ⅲ': 'iii', 'Ⅳ': 'iv' };
 const xnorm = (s) => norm(s).replace(/[ⅰ-ⅳⅠ-Ⅳ]/g, (m) => ROMAN[m]).replace(/^\d{2}\.?(?=[^\d.])/, '').split('.').pop();
@@ -12,8 +12,11 @@ const MARK = { line: ['line', 'spline'], bar: ['column', 'bar', 'area', 'arearan
 
 export function compareFigure(src, run) {
   const out = [], add = (feature, status, source, runtime, note = '') => out.push({ feature, status, source, runtime, note });
+  const seen = {};
   for (const ax of src.yAxes) {
-    const r = run.yAxes.find((a) => a.side === ax.side && !a.linked) || run.yAxes.find((a) => a.side === ax.side);
+    // 같은 쪽 축이 여럿이면(다중 우축 ①②) 바깥으로 나가는 순서대로 짝짓는다
+    const k = seen[ax.side] = (seen[ax.side] ?? -1) + 1, sides = run.yAxes.filter((a) => a.side === ax.side);
+    const r = sides.filter((a) => !a.linked)[k] || sides[k] || sides[0];
     if (!r) { add(`y축(${ax.side})`, 'fail', ax.ticks, null, '구현에 이 쪽 축이 없음'); continue; }
     const same = ax.ticks.length === r.ticks.length && ax.ticks.every((t, i) => near(t, r.ticks[i], 1e-6));
     add(`y축(${ax.side}) 눈금`, same ? 'pass' : 'fail', ax.ticks, r.ticks);
@@ -22,6 +25,9 @@ export function compareFigure(src, run) {
   const srcX = src.xLabels.map((l) => xnorm(l.text)).filter(Boolean), runX = run.xLabels.map(xnorm);
   const runXJoined = run.xLabels.map(norm).join('|');
   const missX = srcX.filter((t) => !runX.includes(t) && !runXJoined.includes(t));
+  const runTitles = [...run.yAxes.map((a) => a.title), ...run.texts].map(norm).join('|');
+  for (const u of src.units || []) add(`y축 단위(${u.side}) 「${u.text}」`, runTitles.includes(norm(u.text)) ? 'pass' : 'fail', u.text,
+    run.yAxes.filter((a) => a.side === u.side).map((a) => a.title), '');
   add('x축 라벨', missX.length ? 'fail' : 'pass', srcX, runX, missX.length ? `구현에 없는 라벨: ${missX.join(', ')}` : '');
   const legend = src.legend.filter((l) => l.mark);
   const runL = run.legend.map((l) => norm(l.text));
@@ -45,7 +51,7 @@ export function compareFigure(src, run) {
     add(`가로 기준선 ${ref.value}`, hit ? 'pass' : 'fail', `${ref.value} ${ref.dash}`, hit ? `${hit.value} ${hit.dash}` : null, hit ? '' : '구현에 같은 높이의 plotLine 없음');
   }
   add('세로선 수', src.verticalLines.length === run.verticalLines.length ? 'pass' : 'review', src.verticalLines.length, run.verticalLines.length);
-  const runT = [...run.texts, ...run.yAxes.map((a) => a.title)].map(norm).join('|');
+  const runT = [...(run.allTexts || run.texts), ...run.yAxes.map((a) => a.title)].map(norm).join('');
   for (const n of src.notes) add(`플롯 안 글자 「${n.text}」`, runT.includes(norm(n.text)) ? 'pass' : 'fail', n.text, null, runT.includes(norm(n.text)) ? '' : '구현 플롯 안에 없음');
   return out;
 }

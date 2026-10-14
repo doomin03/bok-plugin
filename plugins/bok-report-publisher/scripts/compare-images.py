@@ -87,6 +87,12 @@ def generate(manifest, output, targets_file=None):
         heading = f'{identity} — {title}'
         body = f'<h2>{escape(heading)}</h2><p>{escape(note)}</p>'
         md = [f'## {heading.replace(chr(10), " ")}', '', note, '']
+        # 원본 그림 특징(bok-start featureSummary)을 이미지·유사도보다 먼저 보여 준다
+        features = [str(x) for x in entry.get('featureSummary') or []]
+        record['featureSummary'] = features
+        body += '<h3>원본 그림 특징</h3>' + ('<ul>' + ''.join(f'<li>{escape(f)}</li>' for f in features) + '</ul>' if features
+                                          else '<p>미추출: 그림을 보고 기록해야 합니다.</p>')
+        md += ['원본 그림 특징:', *([f'- {f}' for f in features] or ['- 미추출']), '']
         if 'comparisonTarget' in record:
             target = record['comparisonTarget']
             description = f'기개발 프로젝트: {target["projectPath"]}\n오너 설명: {target["description"]}\n비교 소스: {target["selectedSource"]}\n소스 SHA256: {target["sourceSha256"]}\n요청 ref: {target.get("ref") or "현재 소스 상태"}'

@@ -7,7 +7,7 @@ import {prepare,applyReview,requireApproved} from '../scripts/workflow.mjs';
 const fixture=()=>{
  const repo=fs.mkdtempSync(path.join(os.tmpdir(),'bok-owner-'));
  fs.mkdirSync(path.join(repo,'evidence'));fs.writeFileSync(path.join(repo,'evidence/cells.json'),'[1,null,3]');
- const unit={slug:'i-1',kind:'chart',title:'I-1',files:['src/I1.vue'],sourceRefs:['Sheet A1:D4'],acceptance:['Actual chart, source values match'],baseline:{commit:'123456',files:['old/I1.vue']},comparison:'same three series',sourceEvidence:['evidence/cells.json'],questions:[]};
+ const unit={slug:'i-1',kind:'chart',title:'I-1',files:['src/I1.vue'],sourceRefs:['Sheet A1:D4'],acceptance:['Actual chart, source values match'],baseline:{commit:'123456',files:['old/I1.vue']},comparison:'same three series',sourceEvidence:['evidence/cells.json'],questions:[],figureLink:{status:'confirmed',media:'word/media/image1.wmf'},featureSummary:['panel1: left 0~10']};
  return {repo,plan:{report:'test',units:[unit]}};
 };
 test('start preserves review edits and cannot implicitly approve',()=>{
@@ -47,4 +47,13 @@ test('explicit plan revision preserves old owner notes and invalidates old appro
  prepare(repo,next,{revise:true});
  assert.ok(fs.readFileSync(path.join(repo,'openspec/changes/bok-owner-review-test/drafts',draft.planHash,'owner-review.md'),'utf8').includes('OWNER COMMENT'));
  assert.throws(()=>requireApproved(repo,next,['i-1']),/Plan changed/);
+});
+test('source features come before the owner decision and reach the approved spec',()=>{
+ const {repo,plan}=fixture(),draft=prepare(repo,plan),dir=path.join(repo,'openspec/changes/bok-owner-review-test');
+ const md=fs.readFileSync(path.join(dir,'owner-review.md'),'utf8');
+ assert.ok(md.indexOf('panel1: left 0~10')>0&&md.indexOf('panel1: left 0~10')<md.indexOf('AI 제안: '),'features precede the AI similarity note');
+ const r=applyReview(repo,plan,{planHash:draft.planHash,owner:'Owner',decisions:[{slug:'i-1',decision:'reuse',comment:'ok'}]},'Owner message');
+ assert.match(fs.readFileSync(path.join(dir,'revisions',r.revision,'specs/owner-decisions/spec.md'),'utf8'),/source-features[\s\S]*panel1: left 0~10/);
+ const bare=fixture();delete bare.plan.units[0].featureSummary;const d=prepare(bare.repo,bare.plan);
+ assert.throws(()=>applyReview(bare.repo,bare.plan,{planHash:d.planHash,owner:'Owner',decisions:[{slug:'i-1',decision:'new',comment:'ok'}]},'Owner message'),/features required/);
 });

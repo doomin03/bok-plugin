@@ -27,6 +27,8 @@ export function collectRuntime(id) {
     verticalLines: (x.plotLinesAndBands || []).filter((p) => p.options.value != null).map((p) => ({ at: rel(p.options.value), dash: p.options.dashStyle || 'Solid' })),
     // 플롯 안 글자: 원본 주석이 구현에서 플롯 밖(제목 줄 등)으로 옮겨져도 찾도록 컨테이너 전체 글자를 함께 둔다
     texts: [...c.container.querySelectorAll('svg text, div span')].filter((t) => !t.closest(skip)).map((t) => plain(t.textContent)).filter(Boolean),
+    // 원본 플롯 안 글자는 구현에서 데이터 라벨·범례·축 라벨로 옮겨 있어도 화면에 있으면 찾는다
+    allTexts: [...c.container.querySelectorAll('svg text, div span')].filter((t) => !t.closest('.highcharts-tooltip')).map((t) => plain(t.textContent)).filter(Boolean),
     textsInPlot: [...c.container.querySelectorAll('svg text')].filter((t) => !t.closest(skip) && inPlot(t.getBoundingClientRect())).map((t) => plain(t.textContent)).filter(Boolean),
   };
 }

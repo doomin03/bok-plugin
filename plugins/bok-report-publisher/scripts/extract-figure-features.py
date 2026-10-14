@@ -4,7 +4,7 @@ usage: python extract-figure-features.py --source <report.docx | folder> --out <
 Output is evidence for chart specs (visualContract) and for verify-figure-features.mjs; it never
 approves a chart. Raster images (png/jpg) are listed as needing manual feature entry.
 """
-import argparse, json, zipfile
+import argparse, hashlib, json, zipfile
 from pathlib import Path
 from figure_records import read_wmf, read_emf
 from figure_features import extract
@@ -26,8 +26,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--source', required=True); ap.add_argument('--out', required=True)
     a = ap.parse_args()
-    result, summary = {}, {'vector': 0, 'raster': 0, 'failed': []}
+    result, summary, seen = {}, {'vector': 0, 'raster': 0, 'duplicate': 0, 'failed': []}, {}
     for name, data in figures(a.source):
+        # 같은 그림을 두 번 넣은 DOCX(대체 표현·재사용)가 있다: 바이트가 같으면 첫 그림을 가리킨다
+        key = hashlib.sha256(data).hexdigest()
+        if key in seen:
+            result[name] = {'status': 'duplicate', 'of': seen[key]}; summary['duplicate'] += 1; continue
+        seen[key] = name
         ext = name.rsplit('.', 1)[-1].lower()
         if ext not in ('wmf', 'emf'):
             result[name] = {'status': 'raster-manual'}; summary['raster'] += 1; continue

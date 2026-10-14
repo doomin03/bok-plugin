@@ -1,5 +1,5 @@
 """End-to-end self-check for start-report.py with a tiny generated DOCX (TOC table, figure paragraph, WMF) and XLSX.
-usage: python test_start_report.py"""
+usage: python check_start_report.py"""
 import json, struct, subprocess, sys, tempfile, zipfile
 from pathlib import Path
 
@@ -61,4 +61,7 @@ with tempfile.TemporaryDirectory() as tmp:
     assert chart['seriesNames'] == ['명목GDP(좌축)'], chart['seriesNames']
     assert chart['legendMatchCandidates'][0]['media'] == 'word/media/image1.wmf', chart['legendMatchCandidates']
     assert chart['referenceImageCandidates'] == ['word/media/image1.wmf'], chart['referenceImageCandidates']
+    # 캡션 순서와 범례가 같은 그림을 가리키면 확정, 특징 요약이 오너 리뷰용으로 붙는다(축 없는 그림은 사람이 채울 칸)
+    assert chart['figureLink']['status'] == 'confirmed' and chart['figureLink']['media'] == 'word/media/image1.wmf', chart['figureLink']
+    assert chart['visualContract']['status'] == 'pending-manual' and chart['featureSummary'][0].startswith('자동 추출 없음'), chart
 print('start-report self-check: OK')
