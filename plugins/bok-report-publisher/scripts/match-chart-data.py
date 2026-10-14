@@ -20,8 +20,8 @@ def run(a):
     fmts={int(n.get('numFmtId')):n.get('formatCode') for n in styles.findall(S+'numFmts/'+S+'numFmt')}
     dateids={i for i,n in enumerate(styles.find(S+'cellXfs')) if 14<=int(n.get('numFmtId','0'))<=22 or ('y' in fmts.get(int(n.get('numFmtId','0')),'').lower() and ('m' in fmts.get(int(n.get('numFmtId','0')),'').lower()))}
     donors=[]
-    for p in (repo/'src/pages/report/components/toc').rglob('graphData/**/*.json'):
-        if 'report202609' in p.parts:continue
+    for p in (repo/a.donor_root).rglob('graphData/**/*.json'):
+        if any(re.fullmatch(a.exclude,part) for part in p.parts):continue
         try:
             rows=json.loads(p.read_text(encoding='utf-8-sig'))
             if not isinstance(rows,list) or len(rows)<10 or not all(isinstance(r,dict) for r in rows):continue
@@ -66,4 +66,6 @@ def run(a):
 if __name__=='__main__':
     p=argparse.ArgumentParser()
     for k in ('repo','source','out'):p.add_argument('--'+k,required=True)
+    p.add_argument('--donor-root',default='src/pages/report/components/toc',help='기존 보고서 차트 루트(comparison-targets 의 sourcePaths)')
+    p.add_argument('--exclude',default=r'report\d{6}',help='후보에서 뺄 폴더 이름 정규식(회차 전용 트리)')
     run(p.parse_args())

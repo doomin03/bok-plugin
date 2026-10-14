@@ -3,10 +3,10 @@
 플러그인 루트에서 실행한다. 다른 경로에서는 스크립트의 절대 경로를 사용한다.
 
 ```powershell
-node scripts/review.mjs init --repo C:/workspace/vue-project/bok-vue-web
-node scripts/review.mjs dev --repo C:/workspace/vue-project/bok-vue-web
-node scripts/review.mjs build --repo C:/workspace/vue-project/bok-vue-web
-node scripts/review.mjs list --repo C:/workspace/vue-project/bok-vue-web
+node scripts/review.mjs init --repo <repo>
+node scripts/review.mjs dev --repo <repo>
+node scripts/review.mjs build --repo <repo>
+node scripts/review.mjs list --repo <repo>
 ```
 
 `dev`로 서버를 연 후 `/report.html`에 접속한다. `build`는 같은 번호 표시를 포함한 `dist-review/report.html`을 생성한다. 일반 `npm run build`는 기존대로 번호가 없다. 별도 검수 빌드는 기존 Vite 설정을 읽지만 설정 파일이나 Vue 원본은 수정하지 않는다.
@@ -16,7 +16,7 @@ node scripts/review.mjs list --repo C:/workspace/vue-project/bok-vue-web
 화면의 번호를 누르면 수정 내용과 테스트 조건(한 줄에 하나)을 입력한다. 저장하면 번호, 코드 해시, 화면 크기, 피드백, 테스트 조건을 포함한 JSON 파일을 다운로드한다. 정적 검수 빌드에서도 동작한다.
 
 ```powershell
-node scripts/review.mjs feedback --repo C:/workspace/vue-project/bok-vue-web --input C:/Users/jung3/Downloads/S001-C001-feedback.json
+node scripts/review.mjs feedback --repo <repo> --input <Downloads>/S001-C001-feedback.json
 ```
 
 이 명령은 `openspec/changes/review-s001-c001-<고유값>/`에 proposal.md, design.md, tasks.md, specs/report-review/spec.md, review.json을 생성한다. 기존 OpenSpec 설정과 다른 리뷰는 덮어쓰지 않는다. 등록되지 않은 번호, 비어 있는 테스트 조건, 검수 빌드 이후 코드가 변경된 피드백은 거부한다. 자동 생성 테스트 조건은 수락 기준이며 실행한 테스트 결과가 아니다.

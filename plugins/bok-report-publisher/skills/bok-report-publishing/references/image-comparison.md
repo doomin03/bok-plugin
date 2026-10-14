@@ -1,5 +1,7 @@
 # 차트·사진 비교 산출물
 
+> 통계 그림의 1차 근거는 `source-features.md` 의 원본 특징 대조다. 이 문서의 픽셀 유사도·나란히 보기는 보조 증거이며, 점수로 통과를 정하지 않는다.
+
 ## 오너 지정 기개발 소스 기준
 
 `bok-start`의 비교 대상은 오너가 docs에 지정한 기개발 프로젝트다. 설정 우선순위는 명시 경로 → `<repo>/docs/<report>/comparison-targets.json` → `<repo>/docs/comparison-targets.json`이다. 선택된 파일이 잘못되면 다른 대상으로 대체하지 않는다. 오너 입력 예시:

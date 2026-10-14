@@ -4,6 +4,10 @@ A spec is an implementation contract grounded in the source package. It must ide
 
 For transformations, record the formula and independently test it. Do not change revisions, footnotes, provisional markers, or missing values without a documented rule. Add visual checks for dual axes, stacked totals, forecast boundaries, index base, labels or any figure-specific behaviour.
 
+## Source features
+
+Fill visualContract from the figure's entry in figure-features.json (references/source-features.md) instead of reading the picture by eye. Record the figure media name in source.referenceImage. Features not extracted there (tooltips, data values, note text, mobile layout) still need their own evidence.
+
 ## Series mark (required feature)
 
 Every series MUST record its visual mark, read from the source image's plot shapes and legend symbol, not guessed from the data: `bar` (grouped or stacked), `line`, `line+marker`, `marker-only` (no connecting line), or `area`. For markers also record the symbol (diamond, circle, triangle, square) plus fill and outline. Record it in `series[].mark` and `visualContract.seriesAppearance`.

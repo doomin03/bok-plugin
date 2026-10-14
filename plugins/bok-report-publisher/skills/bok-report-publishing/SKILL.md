@@ -9,13 +9,15 @@ Turn an approved BOK report source package into a traceable web implementation. 
 
 ## Start a figure
 
-Canonical workflow: bok-start creates an owner comparison review; bok-spec applies the owner's decisions; bok-implement selects scope; bok-chart builds; bok-verify verifies; bok-feedback records corrections. Read references/owner-workflow.md. No owner approval means no implementation. A direct user approval of a concrete proposed chart strategy may be recorded, but never invent approval from silence.
+Canonical workflow: bok-start creates an owner comparison review; bok-spec applies the owner's decisions; bok-implement selects scope; bok-chart builds; bok-verify verifies; bok-land lands agent work into feature then develop; bok-feedback records corrections. Design-QA Jira tickets go through bok-qa. Read references/owner-workflow.md. No owner approval means no implementation. A direct user approval of a concrete proposed chart strategy may be recorded, but never invent approval from silence.
 
 Owner-configured donor projects come from docs/comparison-targets.json or report-specific docs/<report>/comparison-targets.json, with an explicitly supplied configuration path taking precedence. Read references/image-comparison.md for required projectPath, description and sourcePaths, candidate mapping and comparison artifacts. Never infer a donor project from the current checkout alone.
 
 Before any implementation, read [mandatory fidelity contract](references/fidelity-contract.md). Existing UI and shared source are immutable; only source content and chart internals may change. Do not add data-table controls or new styles. For whole-document preparation use ../bol-start/SKILL.md; for verification or feedback use ../bol-verify/SKILL.md or ../bol-feedback/SKILL.md.
 
 Identify the report DOCX, figure-data XLSX, target report surface, and target branch/commit. Source documents are managed under `<repo>/docs/<report>/` (one `.docx`, one `.xlsx`); bol-start reads that location by default. Create one open chart specification from `assets/chart-spec.template.json` for each figure. Record the source sheet, exact data/header range, unit, period, caption/source note, series mapping, forecast rule and expected target files. Never infer economic semantics from a screenshot.
+
+Read [source features](references/source-features.md): extract chart features from the DOCX vector figures, fill visualContract from them, verify the rendered charts against them, and turn every owner feedback into a checker rule or exception.
 
 Use `scripts/catalog-source-data.py` to review an XLSX sheet. Keep unavailable source values as `null`, never zero or an empty string.
 
@@ -37,7 +39,7 @@ Read [note mapping and responsive verification](references/notes-and-responsive-
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json
 node scripts/audit-chart.mjs --spec path/to/chart-spec.json --data path/to/graphData.json --component path/to/GraphComponent.vue
 python scripts/catalog-source-data.py --workbook path/to/source.xlsx --sheet "Ⅰ-1"
-powershell -ExecutionPolicy Bypass -File scripts/verify-report.ps1 -Repo C:\workspace\vue-project\bok-vue-web -Mode report
+powershell -ExecutionPolicy Bypass -File scripts/verify-report.ps1 -Repo <repo> -Mode report
 ```
 
 The chart audit checks structural parity with the declared contract; it does not prove source-column meaning. After a visual change, inspect desktop and mobile and compare title, unit, series, axes, forecast style, date labels, values, caption and source note to the source package. Record feedback as figure ID, severity, source evidence, target location, observed result, expected result, and smallest corrective change.
