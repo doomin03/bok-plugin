@@ -57,3 +57,7 @@ test('source features come before the owner decision and reach the approved spec
  const bare=fixture();delete bare.plan.units[0].featureSummary;const d=prepare(bare.repo,bare.plan);
  assert.throws(()=>applyReview(bare.repo,bare.plan,{planHash:d.planHash,owner:'Owner',decisions:[{slug:'i-1',decision:'new',comment:'ok'}]},'Owner message'),/features required/);
 });
+test('an auto-extraction notice alone is not a feature list',()=>{
+ const {repo,plan}=fixture();plan.units[0].featureSummary=['자동 추출 없음: 원본 그림에서 축을 찾지 못함'];const d=prepare(repo,plan);
+ assert.throws(()=>applyReview(repo,plan,{planHash:d.planHash,owner:'Owner',decisions:[{slug:'i-1',decision:'reuse',comment:'ok'}]},'Owner message'),/features required/);
+});

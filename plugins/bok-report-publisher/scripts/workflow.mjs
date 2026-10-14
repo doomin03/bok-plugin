@@ -66,7 +66,8 @@ export function applyReview(repo,plan,decisions,authorization){
   if(d.decision!=='hold'){
    if(u.kind==='chart'&&(!u.baseline?.commit||!u.baseline?.files?.length||!u.comparison||!u.sourceEvidence?.length))throw Error('Chart comparison, baseline and source evidence required');
    // 특징 먼저, 유사도 판정은 그다음: 원본 그림 특징 없이 재사용·신규를 정하지 않는다
-   if(u.kind==='chart'&&!u.featureSummary?.length)throw Error('Source figure features required before an owner decision (bok-start featureSummary)');
+   // '자동 추출 없음' 안내만 있는 경우도 특징이 없는 것이다: 사람이 그림을 보고 적어야 한다
+   if(u.kind==='chart'&&!(u.featureSummary||[]).some(l=>!String(l).startsWith('자동 추출 없음')))throw Error('Source figure features required before an owner decision (bok-start featureSummary)');
    if(u.questions?.length)throw Error('Resolve outstanding questions in plan, then request review again');
   }
   const evidence={};

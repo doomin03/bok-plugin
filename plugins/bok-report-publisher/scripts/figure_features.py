@@ -191,6 +191,11 @@ def classify_shapes(out, shapes, geo):
     # 눈금마다 그은 가로선은 기준선이 아니라 격자선이다(값이 눈금과 3개 이상 겹치면)
     ticks = [t for ax in out['yAxes'] if ax['side'] == 'left' for t in ax['ticks']]
     span = (max(ticks) - min(ticks)) if len(ticks) >= 2 else 0
+    # 좌표→값 환산 오차(0.3% 안팎)로 0 선이 -0.24 처럼 읽힌다: 눈금에서 1% 안이면 눈금 값으로 맞춘다
+    for r in out['referenceLines']:
+        near = min(ticks, key=lambda t: abs(t - r['value']), default=None) if r['value'] is not None else None
+        if near is not None and span and abs(near - r['value']) <= span * 0.01:
+            r['value'] = near
     grid = [r for r in out['referenceLines'] if r['value'] is not None and span and any(abs(r['value'] - t) <= span * 0.02 for t in ticks)]
     style = max({(r['dash'], r['colour']) for r in grid}, key=lambda k: sum((r['dash'], r['colour']) == k for r in grid), default=None)
     grid = [r for r in grid if (r['dash'], r['colour']) == style]  # 0 선처럼 모양이 다른 선은 기준선으로 남긴다
