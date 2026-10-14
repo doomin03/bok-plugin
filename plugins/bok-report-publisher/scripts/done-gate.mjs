@@ -22,7 +22,9 @@ if (arg('--audits')) {
   if (a && !rows.length) problems.push('감사 결과가 비어 있음');
   for (const r of rows) {
     const name = r.audit || r.name;
-    if (!(r.measured > 0)) problems.push(`감사 ${name}: 측정 0건(측정 실패)`);
+    // run-audits 의 skipped(입력 없음)·error 도 미검증이다
+    if (/^(skipped|error)/.test(r.status || '')) problems.push(`감사 ${name}: ${r.status}`);
+    else if (!(r.measured > 0)) problems.push(`감사 ${name}: 측정 0건(측정 실패)`);
     if (r.defects > 0) problems.push(`감사 ${name}: 결함 ${r.defects}건`);
   }
 }

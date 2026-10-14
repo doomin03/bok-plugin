@@ -23,6 +23,8 @@ test('missing width, zero-measured audit and feature failure each block "done"',
   'f.json': [{status: 'fail', chart: 'c', width: 390, checks: [{feature: 'y축 눈금', status: 'fail'}]}]},
   [['--evidence', 'e.md'], ['--audits', 'a.json'], ['--figure-check', 'f.json']]);
  assert.equal(r.code, 1);
+ const s = run({'e.md': full, 'a.json': [{audit: 'footnote-map', measured: null, defects: null, status: 'skipped (--units 없음)'}]}, [['--evidence', 'e.md'], ['--audits', 'a.json']]);
+ assert.equal(s.code, 1); assert.match(s.out.problems.join('\n'), /skipped/);
  const text = r.out.problems.join('\n');
  assert.match(text, /폭 360/); assert.match(text, /측정 0건/); assert.match(text, /y축 눈금/);
 });
